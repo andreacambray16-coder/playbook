@@ -17,10 +17,6 @@
     @keyframes fadeUp      { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
     @keyframes shine       { 0%{background-position:-200% center} 100%{background-position:200% center} }
     @keyframes glow-pulse  { 0%,100%{box-shadow:0 0 20px rgba(34,197,94,.15)} 50%{box-shadow:0 0 40px rgba(34,197,94,.3)} }
-    @keyframes confetti-fall {
-      0%   { transform: translateY(-10px) rotate(0deg);   opacity: 1; }
-      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-    }
     @keyframes count-in { from{opacity:0;transform:scale(.85)} to{opacity:1;transform:scale(1)} }
     @keyframes slide-right { from{width:0} to{width:var(--w)} }
 
@@ -82,15 +78,15 @@
     }
     .campaign-row:hover { background:rgba(245,229,0,.025); }
 
-    /* Confetti */
-    .confetti-piece {
-      position: fixed;
-      width: 8px; height: 8px;
-      border-radius: 2px;
-      pointer-events: none;
-      z-index: 9999;
-      animation: confetti-fall linear forwards;
+    /* Period selector */
+    .period-pill {
+      padding: 6px 14px; border-radius: 100px; cursor: pointer;
+      font-size: 13px; font-weight: 600; transition: all .2s;
+      border: 1px solid #2A2A26; color: #A8A8A2; background: #1A1A18;
+      white-space: nowrap;
     }
+    .period-pill:hover  { border-color:#3E3E3A; color:#F5F5F0; }
+    .period-pill.active { background:#F5E500; color:#0D0D0B; border-color:#F5E500; }
 
     /* ROI highlight */
     .roi-box {
@@ -111,22 +107,25 @@
 </head>
 <body>
 
-<!-- Confetti container -->
-<div id="confetti-container"></div>
-
 <!-- ══════════════════════════════════════
      HEADER
 ══════════════════════════════════════ -->
 <header class="sticky top-0 z-50 border-b border-[#2A2A26]" style="background:rgba(13,13,11,.96);backdrop-filter:blur(20px)">
-  <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-    <div>
-      <div class="font-display text-xl tracking-wider text-white">TUS RESULTADOS <span class="text-[#F5E500]">DE ESTE MES</span></div>
-      <div class="text-[#6B6B6B] text-xs mt-0.5" id="header-period">Cargando...</div>
+  <div class="max-w-5xl mx-auto px-6 py-3">
+    <!-- Fila 1: título + estado -->
+    <div class="flex items-center justify-between mb-2">
+      <div>
+        <div class="font-display text-xl tracking-wider text-white">TUS RESULTADOS <span class="text-[#F5E500]">DE CAMPAÑAS</span></div>
+      </div>
+      <div class="flex items-center gap-2 bg-[#1A1A18] border border-[#2A2A26] rounded-full px-3 py-1.5">
+        <span class="w-2 h-2 rounded-full bg-[#22C55E] pulse-dot"></span>
+        <span class="text-[#22C55E] text-xs font-semibold">En vivo</span>
+        <span class="text-[#6B6B6B] text-xs" id="header-time">—</span>
+      </div>
     </div>
-    <div class="flex items-center gap-2 bg-[#1A1A18] border border-[#2A2A26] rounded-full px-4 py-2">
-      <span class="w-2 h-2 rounded-full bg-[#22C55E] pulse-dot"></span>
-      <span class="text-[#22C55E] text-xs font-semibold">En vivo</span>
-      <span class="text-[#6B6B6B] text-xs" id="header-time">—</span>
+    <!-- Fila 2: selector de períodos -->
+    <div class="flex items-center gap-2 flex-wrap" id="period-selector">
+      <!-- JS renderiza las pills -->
     </div>
   </div>
 </header>
@@ -533,64 +532,161 @@
 <script>
 
 // ─────────────────────────────────────────
-//  DATOS — edita aquí tus números reales
+//  PERÍODOS — agrega o edita meses aquí
 // ─────────────────────────────────────────
-const D = {
-  totalVentas:   253,
-  totalRevenue:  285400,
-  totalGasto:    20160,
-  totalAlcance:  936500,
+const PERIODS = {
 
-  paid: {
-    ventas:  201,
-    revenue: 226800,
-    gasto:   20160,
-    alcance: 847300,
-    campanas: [
-      { nombre:"Captación de nuevos clientes — Abril",       estado:"activa",  alcance:312000, ventas:80, gasto:7200,  revenue:90200 },
-      { nombre:"Retargeting — personas que ya nos vieron",   estado:"activa",  alcance:168000, ventas:71, gasto:5100,  revenue:80100 },
-      { nombre:"Reconocimiento de marca",                    estado:"activa",  alcance:284000, ventas:28, gasto:4800,  revenue:31600 },
-      { nombre:"Tráfico al sitio web",                       estado:"pausada", alcance:72000,  ventas:18, gasto:1840,  revenue:20300 },
-      { nombre:"Video testimoniales de clientes",            estado:"activa",  alcance:11300,  ventas:4,  gasto:1220,  revenue:4600  },
-    ]
+  'abr-2026': {
+    label: 'Abril 2026',
+    totalVentas:253, totalRevenue:285400, totalGasto:20160, totalAlcance:936500,
+    paid:{
+      ventas:201, revenue:226800, gasto:20160, alcance:847300,
+      campanas:[
+        { nombre:"Captación de nuevos clientes — Abril",     estado:"activa",  alcance:312000, ventas:80, gasto:7200, revenue:90200 },
+        { nombre:"Retargeting — personas que ya nos vieron", estado:"activa",  alcance:168000, ventas:71, gasto:5100, revenue:80100 },
+        { nombre:"Reconocimiento de marca",                  estado:"activa",  alcance:284000, ventas:28, gasto:4800, revenue:31600 },
+        { nombre:"Tráfico al sitio web",                     estado:"pausada", alcance:72000,  ventas:18, gasto:1840, revenue:20300 },
+        { nombre:"Video testimoniales de clientes",          estado:"activa",  alcance:11300,  ventas:4,  gasto:1220, revenue:4600  },
+      ]
+    },
+    email:{
+      enviados:14820, abiertos:4209, conversaciones:697, ventas:52, revenue:58600,
+      correos:[
+        { nombre:"Newsletter Abril",                              fecha:"2 Abr",    enviados:5200, abiertos:1988, conversaciones:317, ventas:26, revenue:29300 },
+        { nombre:"Promo Semana Santa",                           fecha:"28 Mar",   enviados:4800, abiertos:1512, conversaciones:278, ventas:16, revenue:18000 },
+        { nombre:"Bienvenida nuevos suscriptores (1er correo)",  fecha:"Continuo", enviados:1840, abiertos:1148, conversaciones:261, ventas:8,  revenue:9000  },
+        { nombre:"Bienvenida nuevos suscriptores (2do correo)",  fecha:"Continuo", enviados:1640, abiertos:799,  conversaciones:154, ventas:2,  revenue:2300  },
+        { nombre:"Reactivación — clientes inactivos",            fecha:"15 Mar",   enviados:1340, abiertos:162,  conversaciones:35,  ventas:0,  revenue:0     },
+      ]
+    },
+    organico:{
+      programado:24, publicado:22, alcance:89420, likes:5029, comentarios:335, guardados:1284,
+      tipos:[
+        { tipo:"Reels",cantidad:8,color:"#A78BFA" },{ tipo:"Carruseles",cantidad:7,color:"#38BDF8" },
+        { tipo:"Imágenes",cantidad:5,color:"#F5E500" },{ tipo:"Historias",cantidad:2,color:"#FB923C" },
+      ],
+      orgDays:[2800,3100,2600,2400,3200,4100,3800,2900,2700,3100,3600,3300,2800,2900,3400,4200,3900,3100,2900,3400,4000,4600,4400,3800,3600,3400,4100,4700,5200,4800],
+      posts:[
+        { nombre:"Reel: Tips de ahorro #1",              tipo:"Reel",     alcance:18400,likes:1240,comentarios:87, guardados:342,eng:9.1 },
+        { nombre:"Carrusel: Guía completa Q2",           tipo:"Carrusel", alcance:12800,likes:843, comentarios:54, guardados:284,eng:9.2 },
+        { nombre:"Reel: Behind the scenes",              tipo:"Reel",     alcance:14200,likes:982, comentarios:63, guardados:198,eng:8.8 },
+        { nombre:"Reel: Tutorial paso a paso",           tipo:"Reel",     alcance:10200,likes:741, comentarios:48, guardados:224,eng:9.9 },
+        { nombre:"Carrusel: Estadísticas del sector",    tipo:"Carrusel", alcance:11400,likes:724, comentarios:41, guardados:187,eng:8.4 },
+        { nombre:"Post: Testimonio de cliente",          tipo:"Imagen",   alcance:9200, likes:312, comentarios:28, guardados:41, eng:4.1 },
+        { nombre:"Historia: Encuesta ¿qué quieres ver?",tipo:"Historia", alcance:7800, likes:0,   comentarios:0,  guardados:0,  eng:42.1},
+        { nombre:"Post: Feliz inicio de semana",         tipo:"Imagen",   alcance:5420, likes:187, comentarios:14, guardados:8,  eng:3.9 },
+      ]
+    }
   },
 
-  email: {
-    enviados:        14820,
-    abiertos:        4209,
-    conversaciones:  697,
-    ventas:          52,
-    revenue:         58600,
-    correos: [
-      { nombre:"Newsletter Abril",                              fecha:"2 Abr",    enviados:5200, abiertos:1988, conversaciones:317, ventas:26, revenue:29300 },
-      { nombre:"Promo Semana Santa",                           fecha:"28 Mar",   enviados:4800, abiertos:1512, conversaciones:278, ventas:16, revenue:18000 },
-      { nombre:"Bienvenida a nuevos suscriptores (1er correo)",fecha:"Continuo", enviados:1840, abiertos:1148, conversaciones:261, ventas:8,  revenue:9000  },
-      { nombre:"Bienvenida a nuevos suscriptores (2do correo)",fecha:"Continuo", enviados:1640, abiertos:799,  conversaciones:154, ventas:2,  revenue:2300  },
-      { nombre:"Reactivación — clientes inactivos",            fecha:"15 Mar",   enviados:1340, abiertos:162,  conversaciones:35,  ventas:0,  revenue:0     },
-    ]
+  'mar-2026': {
+    label: 'Marzo 2026',
+    totalVentas:206, totalRevenue:232100, totalGasto:18400, totalAlcance:811200,
+    paid:{
+      ventas:162, revenue:182700, gasto:18400, alcance:724000,
+      campanas:[
+        { nombre:"Captación de nuevos clientes — Marzo",     estado:"activa",  alcance:284000, ventas:63, gasto:6800, revenue:71000 },
+        { nombre:"Retargeting — personas que ya nos vieron", estado:"activa",  alcance:148000, ventas:56, gasto:4700, revenue:63100 },
+        { nombre:"Reconocimiento de marca",                  estado:"activa",  alcance:210000, ventas:21, gasto:4200, revenue:23700 },
+        { nombre:"Tráfico al sitio web",                     estado:"activa",  alcance:68000,  ventas:14, gasto:1600, revenue:15800 },
+        { nombre:"Video testimoniales de clientes",          estado:"activa",  alcance:14000,  ventas:8,  gasto:1100, revenue:9100  },
+      ]
+    },
+    email:{
+      enviados:13240, abiertos:3640, conversaciones:584, ventas:44, revenue:49400,
+      correos:[
+        { nombre:"Newsletter Marzo",                             fecha:"4 Mar",    enviados:4600, abiertos:1656, conversaciones:276, ventas:21, revenue:23600 },
+        { nombre:"Promo Día del Padre",                         fecha:"18 Mar",   enviados:4100, abiertos:1230, conversaciones:221, ventas:14, revenue:15700 },
+        { nombre:"Bienvenida nuevos suscriptores (1er correo)", fecha:"Continuo", enviados:1620, abiertos:1009, conversaciones:228, ventas:7,  revenue:7900  },
+        { nombre:"Bienvenida nuevos suscriptores (2do correo)", fecha:"Continuo", enviados:1480, abiertos:721,  conversaciones:138, ventas:2,  revenue:2200  },
+        { nombre:"Reactivación — clientes inactivos",           fecha:"1 Mar",    enviados:1440, abiertos:198,  conversaciones:41,  ventas:0,  revenue:0     },
+      ]
+    },
+    organico:{
+      programado:22, publicado:20, alcance:74800, likes:4120, comentarios:274, guardados:1048,
+      tipos:[
+        { tipo:"Reels",cantidad:7,color:"#A78BFA" },{ tipo:"Carruseles",cantidad:6,color:"#38BDF8" },
+        { tipo:"Imágenes",cantidad:5,color:"#F5E500" },{ tipo:"Historias",cantidad:2,color:"#FB923C" },
+      ],
+      orgDays:[2200,2400,2100,2000,2600,3400,3100,2400,2200,2600,2900,2700,2200,2400,2800,3500,3200,2600,2400,2800,3300,3800,3600,3100,2900,2800,3400,3900,4200,3800],
+      posts:[
+        { nombre:"Reel: Cómo ahorrar en el mes",    tipo:"Reel",     alcance:15200,likes:1020,comentarios:71,guardados:286,eng:8.7 },
+        { nombre:"Carrusel: Tips financieros",       tipo:"Carrusel", alcance:10400,likes:694, comentarios:44,guardados:218,eng:8.1 },
+        { nombre:"Reel: Motivación lunes",           tipo:"Reel",     alcance:11800,likes:821, comentarios:51,guardados:164,eng:8.3 },
+        { nombre:"Post: Caso de éxito",              tipo:"Imagen",   alcance:7400, likes:261, comentarios:22,guardados:34, eng:3.8 },
+        { nombre:"Carrusel: ¿Qué es el factoraje?",  tipo:"Carrusel", alcance:9200, likes:582, comentarios:33,guardados:148,eng:7.9 },
+        { nombre:"Historia: Poll ¿usas apps?",       tipo:"Historia", alcance:6400, likes:0,   comentarios:0, guardados:0,  eng:38.2},
+        { nombre:"Post: Buenas prácticas Q1",        tipo:"Imagen",   alcance:4800, likes:142, comentarios:11,guardados:7,  eng:3.4 },
+      ]
+    }
   },
 
-  organico: {
-    programado: 24, publicado: 22,
-    alcance: 89420, likes: 5029, comentarios: 335, guardados: 1284,
-    tipos: [
-      { tipo:"Reels",      cantidad:8, color:"#A78BFA" },
-      { tipo:"Carruseles", cantidad:7, color:"#38BDF8" },
-      { tipo:"Imágenes",   cantidad:5, color:"#F5E500" },
-      { tipo:"Historias",  cantidad:2, color:"#FB923C" },
-    ],
-    posts: [
-      { nombre:"Reel: Tips de ahorro #1",               tipo:"Reel",     alcance:18400, likes:1240, comentarios:87,  guardados:342, eng:9.1 },
-      { nombre:"Carrusel: Guía completa Q2",            tipo:"Carrusel", alcance:12800, likes:843,  comentarios:54,  guardados:284, eng:9.2 },
-      { nombre:"Reel: Behind the scenes",               tipo:"Reel",     alcance:14200, likes:982,  comentarios:63,  guardados:198, eng:8.8 },
-      { nombre:"Reel: Tutorial paso a paso",            tipo:"Reel",     alcance:10200, likes:741,  comentarios:48,  guardados:224, eng:9.9 },
-      { nombre:"Carrusel: Estadísticas del sector",     tipo:"Carrusel", alcance:11400, likes:724,  comentarios:41,  guardados:187, eng:8.4 },
-      { nombre:"Post: Testimonio de cliente",           tipo:"Imagen",   alcance:9200,  likes:312,  comentarios:28,  guardados:41,  eng:4.1 },
-      { nombre:"Historia: Encuesta ¿qué quieres ver?", tipo:"Historia", alcance:7800,  likes:0,    comentarios:0,   guardados:0,   eng:42.1},
-      { nombre:"Post: Feliz inicio de semana",          tipo:"Imagen",   alcance:5420,  likes:187,  comentarios:14,  guardados:8,   eng:3.9 },
-    ]
+  'feb-2026': {
+    label: 'Febrero 2026',
+    totalVentas:178, totalRevenue:200600, totalGasto:16800, totalAlcance:698400,
+    paid:{
+      ventas:138, revenue:155400, gasto:16800, alcance:616000,
+      campanas:[
+        { nombre:"Captación de nuevos clientes — Febrero",   estado:"finalizada", alcance:241000, ventas:51, gasto:6200, revenue:57400 },
+        { nombre:"Retargeting — personas que ya nos vieron", estado:"finalizada", alcance:128000, ventas:47, gasto:4200, revenue:52900 },
+        { nombre:"Reconocimiento de marca",                  estado:"finalizada", alcance:182000, ventas:18, gasto:3800, revenue:20300 },
+        { nombre:"Tráfico al sitio web",                     estado:"finalizada", alcance:52000,  ventas:12, gasto:1400, revenue:13500 },
+        { nombre:"Video testimoniales de clientes",          estado:"finalizada", alcance:13000,  ventas:10, gasto:1200, revenue:11300 },
+      ]
+    },
+    email:{
+      enviados:11820, abiertos:3074, conversaciones:496, ventas:40, revenue:45200,
+      correos:[
+        { nombre:"Newsletter Febrero",                           fecha:"3 Feb",    enviados:4000, abiertos:1400, conversaciones:232, ventas:18, revenue:20300 },
+        { nombre:"Promo San Valentín",                          fecha:"12 Feb",   enviados:3600, abiertos:1080, conversaciones:184, ventas:13, revenue:14600 },
+        { nombre:"Bienvenida nuevos suscriptores (1er correo)", fecha:"Continuo", enviados:1400, abiertos:868,  conversaciones:196, ventas:7,  revenue:7900  },
+        { nombre:"Bienvenida nuevos suscriptores (2do correo)", fecha:"Continuo", enviados:1280, abiertos:622,  conversaciones:118, ventas:2,  revenue:2400  },
+        { nombre:"Reactivación — clientes inactivos",           fecha:"20 Feb",   enviados:1540, abiertos:185,  conversaciones:38,  ventas:0,  revenue:0     },
+      ]
+    },
+    organico:{
+      programado:20, publicado:18, alcance:62100, likes:3348, comentarios:221, guardados:842,
+      tipos:[
+        { tipo:"Reels",cantidad:6,color:"#A78BFA" },{ tipo:"Carruseles",cantidad:5,color:"#38BDF8" },
+        { tipo:"Imágenes",cantidad:5,color:"#F5E500" },{ tipo:"Historias",cantidad:2,color:"#FB923C" },
+      ],
+      orgDays:[1800,2000,1700,1600,2100,2800,2600,1900,1800,2100,2400,2200,1800,1900,2300,2800,2600,2100,1900,2300,2700,3100,2900,2600,2400,2200,2700,3100,3400,3100],
+      posts:[
+        { nombre:"Reel: San Valentín para tu negocio",  tipo:"Reel",     alcance:12800,likes:862, comentarios:58,guardados:224,eng:8.4 },
+        { nombre:"Carrusel: Metas Q1",                  tipo:"Carrusel", alcance:8600, likes:571, comentarios:36,guardados:174,eng:7.8 },
+        { nombre:"Reel: Testimonio cliente feliz",      tipo:"Reel",     alcance:9800, likes:684, comentarios:42,guardados:148,eng:8.0 },
+        { nombre:"Post: Reflexión de inicio de mes",    tipo:"Imagen",   alcance:5800, likes:198, comentarios:16,guardados:24, eng:3.7 },
+        { nombre:"Carrusel: Errores al invertir",       tipo:"Carrusel", alcance:7400, likes:481, comentarios:28,guardados:118,eng:7.2 },
+        { nombre:"Historia: ¿Cuánto llevas ahorrado?",  tipo:"Historia", alcance:5200, likes:0,   comentarios:0, guardados:0,  eng:34.6},
+        { nombre:"Post: Tips de cierre de mes",         tipo:"Imagen",   alcance:3800, likes:112, comentarios:9, guardados:5,  eng:3.3 },
+      ]
+    }
   }
+
 };
+
+// Período activo
+let currentPeriod = 'abr-2026';
+let D = PERIODS[currentPeriod];
+
+// Datos orgánicos por período (para la gráfica de línea)
+const DIAS_LABELS = ['8/3','9/3','10/3','11/3','12/3','13/3','14/3','15/3','16/3','17/3','18/3','19/3','20/3','21/3','22/3','23/3','24/3','25/3','26/3','27/3','28/3','29/3','30/3','31/3','1/4','2/4','3/4','4/4','5/4','6/4'];
+
+// Render del selector de períodos
+function renderPeriodSelector() {
+  document.getElementById('period-selector').innerHTML = Object.entries(PERIODS).map(([key, p]) => `
+    <button class="period-pill ${key===currentPeriod?'active':''}" onclick="setPeriod('${key}')">${p.label}</button>
+  `).join('');
+}
+
+function setPeriod(key) {
+  currentPeriod = key;
+  D = PERIODS[key];
+  renderPeriodSelector();
+  renderHero(); renderPaid(); renderEmail(); renderOrganico(); renderCierre();
+  updateCharts();
+}
+
 
 // ─────────────────────────────────────────
 //  HELPERS
@@ -599,30 +695,6 @@ const fmt  = n => n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':St
 const peso = n => '$'+n.toLocaleString('es-MX');
 const pct  = (a,b) => Math.round(a/b*100);
 const jitter = (v,p=.02) => Math.round(v*(1+(Math.random()-.5)*p*2));
-
-// ─────────────────────────────────────────
-//  CONFETTI — dopamina en carga inicial
-// ─────────────────────────────────────────
-function launchConfetti() {
-  const colors = ['#22C55E','#F5E500','#38BDF8','#A78BFA','#FB923C','#fff'];
-  const container = document.getElementById('confetti-container');
-  for (let i = 0; i < 60; i++) {
-    const el = document.createElement('div');
-    el.className = 'confetti-piece';
-    el.style.cssText = `
-      left: ${Math.random()*100}vw;
-      top: -10px;
-      background: ${colors[Math.floor(Math.random()*colors.length)]};
-      width: ${Math.random()*8+4}px;
-      height: ${Math.random()*8+4}px;
-      border-radius: ${Math.random()>0.5?'50%':'2px'};
-      animation-duration: ${Math.random()*2+2}s;
-      animation-delay: ${Math.random()*1.5}s;
-    `;
-    container.appendChild(el);
-    setTimeout(() => el.remove(), 4000);
-  }
-}
 
 // ─────────────────────────────────────────
 //  RENDER FUNCIONES
@@ -783,9 +855,8 @@ function renderCierre() {
 
 function updateTime() {
   const now = new Date();
-  document.getElementById('header-time').textContent   = now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  document.getElementById('header-period').textContent = 'Resumen · '+now.toLocaleDateString('es-MX',{month:'long',year:'numeric'});
-  document.getElementById('footer-time').textContent   = now.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})+' · '+now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('header-time').textContent = now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('footer-time').textContent = now.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})+' · '+now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 
 // ─────────────────────────────────────────
@@ -802,49 +873,67 @@ const SC = {
   y:{grid:{color:'#1F1F1D'},ticks:{color:'#6B6B6B',font:{family:"'Space Grotesk'",size:10}}},
 };
 
-const shortNames = D.paid.campanas.map(c => {
-  const words = c.nombre.split(' ');
-  return words.slice(0,3).join(' ')+'…';
-});
+// ─────────────────────────────────────────
+//  GRÁFICAS — instancias actualizables
+// ─────────────────────────────────────────
+function shortName(c) { return c.nombre.split(' ').slice(0,3).join(' ')+'…'; }
 
-new Chart(document.getElementById('chartRevenue'),{
-  type:'bar',
-  data:{
-    labels: shortNames,
-    datasets:[{
-      label:'Ingresos',
-      data: D.paid.campanas.map(c=>c.revenue),
-      backgroundColor: D.paid.campanas.map(c=>c.estado==='activa'?'rgba(34,197,94,.75)':'rgba(168,168,162,.35)'),
-      borderRadius:6,
-    }]
-  },
-  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:ctx=>' $'+ctx.parsed.y.toLocaleString('es-MX')}}},scales:SC}
-});
+let chartRevenueInst, chartVentasInst, chartOrgInst;
 
-new Chart(document.getElementById('chartVentas'),{
-  type:'bar',
-  data:{
-    labels: shortNames,
-    datasets:[{
-      label:'Ventas',
-      data: D.paid.campanas.map(c=>c.ventas),
-      backgroundColor: D.paid.campanas.map(c=>c.estado==='activa'?'rgba(56,189,248,.7)':'rgba(168,168,162,.35)'),
-      borderRadius:6,
-    }]
-  },
-  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT}},scales:SC}
-});
+function initCharts() {
+  chartRevenueInst = new Chart(document.getElementById('chartRevenue'),{
+    type:'bar',
+    data:{
+      labels: D.paid.campanas.map(shortName),
+      datasets:[{ label:'Ingresos', data:D.paid.campanas.map(c=>c.revenue),
+        backgroundColor:D.paid.campanas.map(c=>c.estado==='activa'?'rgba(34,197,94,.75)':'rgba(168,168,162,.35)'),
+        borderRadius:6 }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:ctx=>' $'+ctx.parsed.y.toLocaleString('es-MX')}}},
+      scales:SC}
+  });
 
-const BASE_ORG=[2800,3100,2600,2400,3200,4100,3800,2900,2700,3100,3600,3300,2800,2900,3400,4200,3900,3100,2900,3400,4000,4600,4400,3800,3600,3400,4100,4700,5200,4800];
-const DIAS=['8/3','9/3','10/3','11/3','12/3','13/3','14/3','15/3','16/3','17/3','18/3','19/3','20/3','21/3','22/3','23/3','24/3','25/3','26/3','27/3','28/3','29/3','30/3','31/3','1/4','2/4','3/4','4/4','5/4','6/4'];
-new Chart(document.getElementById('chartOrgAlcance'),{
-  type:'line',
-  data:{
-    labels:DIAS,
-    datasets:[{label:'Alcance',data:BASE_ORG,borderColor:'#A78BFA',backgroundColor:'rgba(167,139,250,.1)',borderWidth:2,fill:true,tension:0.4,pointRadius:0,pointHoverRadius:4}]
-  },
-  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT}},scales:SC}
-});
+  chartVentasInst = new Chart(document.getElementById('chartVentas'),{
+    type:'bar',
+    data:{
+      labels: D.paid.campanas.map(shortName),
+      datasets:[{ label:'Ventas', data:D.paid.campanas.map(c=>c.ventas),
+        backgroundColor:D.paid.campanas.map(c=>c.estado==='activa'?'rgba(56,189,248,.7)':'rgba(168,168,162,.35)'),
+        borderRadius:6 }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TT}},scales:SC}
+  });
+
+  chartOrgInst = new Chart(document.getElementById('chartOrgAlcance'),{
+    type:'line',
+    data:{
+      labels: DIAS_LABELS,
+      datasets:[{ label:'Alcance', data:D.organico.orgDays,
+        borderColor:'#A78BFA', backgroundColor:'rgba(167,139,250,.1)',
+        borderWidth:2, fill:true, tension:0.4, pointRadius:0, pointHoverRadius:4 }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TT}},scales:SC}
+  });
+}
+
+function updateCharts() {
+  const sn = D.paid.campanas.map(shortName);
+  chartRevenueInst.data.labels = sn;
+  chartRevenueInst.data.datasets[0].data = D.paid.campanas.map(c=>c.revenue);
+  chartRevenueInst.data.datasets[0].backgroundColor = D.paid.campanas.map(c=>c.estado==='activa'?'rgba(34,197,94,.75)':'rgba(168,168,162,.35)');
+  chartRevenueInst.update();
+
+  chartVentasInst.data.labels = sn;
+  chartVentasInst.data.datasets[0].data = D.paid.campanas.map(c=>c.ventas);
+  chartVentasInst.data.datasets[0].backgroundColor = D.paid.campanas.map(c=>c.estado==='activa'?'rgba(56,189,248,.7)':'rgba(168,168,162,.35)');
+  chartVentasInst.update();
+
+  chartOrgInst.data.datasets[0].data = D.organico.orgDays;
+  chartOrgInst.update();
+}
 
 // ─────────────────────────────────────────
 //  INIT
@@ -854,8 +943,9 @@ function fullRender() {
   renderOrganico(); renderCierre(); updateTime();
 }
 
+renderPeriodSelector();
 fullRender();
-launchConfetti(); // 🎉 celebración al cargar
+initCharts();
 setInterval(fullRender, 10000);
 
 </script>

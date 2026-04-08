@@ -80,13 +80,38 @@
 
     /* Period selector */
     .period-pill {
-      padding: 6px 14px; border-radius: 100px; cursor: pointer;
-      font-size: 13px; font-weight: 600; transition: all .2s;
+      padding: 5px 13px; border-radius: 100px; cursor: pointer;
+      font-size: 12px; font-weight: 600; transition: all .18s;
       border: 1px solid #2A2A26; color: #A8A8A2; background: #1A1A18;
       white-space: nowrap;
     }
     .period-pill:hover  { border-color:#3E3E3A; color:#F5F5F0; }
     .period-pill.active { background:#F5E500; color:#0D0D0B; border-color:#F5E500; }
+    .period-pill.custom-active { background:#2A2A26; color:#F5F5F0; border-color:#F5E500; }
+
+    /* Custom date panel */
+    .custom-panel {
+      background:#1A1A18; border:1px solid #3E3E3A; border-radius:12px;
+      padding:12px 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      margin-top:6px;
+    }
+    .date-input {
+      background:#0D0D0B; border:1px solid #3E3E3A; border-radius:8px;
+      color:#F5F5F0; font-family:'Space Grotesk',sans-serif; font-size:13px;
+      padding:6px 10px; outline:none; cursor:pointer;
+    }
+    .date-input:focus { border-color:#F5E500; }
+    .date-input::-webkit-calendar-picker-indicator { filter:invert(.6); cursor:pointer; }
+    .btn-apply {
+      background:#F5E500; color:#0D0D0B; font-weight:700; font-size:12px;
+      border:none; border-radius:8px; padding:7px 14px; cursor:pointer;
+      transition:opacity .15s;
+    }
+    .btn-apply:hover { opacity:.85; }
+    .period-label-badge {
+      background:#2A2A26; border:1px solid #3E3E3A; border-radius:8px;
+      color:#A8A8A2; font-size:11px; padding:4px 10px; white-space:nowrap;
+    }
 
     /* ROI highlight */
     .roi-box {
@@ -124,8 +149,15 @@
       </div>
     </div>
     <!-- Fila 2: selector de períodos -->
-    <div class="flex items-center gap-2 flex-wrap" id="period-selector">
-      <!-- JS renderiza las pills -->
+    <div class="flex items-center gap-1.5 flex-wrap" id="period-pills"></div>
+    <!-- Panel personalizado (oculto por defecto) -->
+    <div class="custom-panel" id="custom-panel" style="display:none">
+      <span class="text-[#6B6B6B] text-xs font-semibold">Desde</span>
+      <input type="date" class="date-input" id="date-from" />
+      <span class="text-[#6B6B6B] text-xs font-semibold">Hasta</span>
+      <input type="date" class="date-input" id="date-to" />
+      <button class="btn-apply" onclick="applyCustomRange()">Aplicar</button>
+      <span class="text-[#6B6B6B] text-xs" id="custom-range-label"></span>
     </div>
   </div>
 </header>
@@ -665,24 +697,185 @@ const PERIODS = {
 
 };
 
+// ── Datos semanales y trimestrales ──────────────────────────
+PERIODS['esta-semana'] = {
+  label:'Esta semana',
+  totalVentas:62, totalRevenue:69800, totalGasto:4700, totalAlcance:214000,
+  paid:{
+    ventas:49, revenue:55200, gasto:4700, alcance:192000,
+    campanas:[
+      { nombre:"Captación de nuevos clientes — Abril",     estado:"activa",  alcance:82000, ventas:20, gasto:1680, revenue:22500 },
+      { nombre:"Retargeting — personas que ya nos vieron", estado:"activa",  alcance:46000, ventas:18, gasto:1200, revenue:20200 },
+      { nombre:"Reconocimiento de marca",                  estado:"activa",  alcance:48000, ventas:7,  gasto:1100, revenue:7900  },
+      { nombre:"Tráfico al sitio web",                     estado:"pausada", alcance:16000, ventas:4,  gasto:420,  revenue:4500  },
+      { nombre:"Video testimoniales de clientes",          estado:"activa",  alcance:0,     ventas:0,  gasto:300,  revenue:0     },
+    ]
+  },
+  email:{
+    enviados:2840, abiertos:808, conversaciones:134, ventas:13, revenue:14600,
+    correos:[
+      { nombre:"Newsletter Semanal (Abr 7)",                   fecha:"7 Abr",  enviados:1800, abiertos:612, conversaciones:96,  ventas:8,  revenue:9000 },
+      { nombre:"Bienvenida nuevos suscriptores (1er correo)",  fecha:"Cont.",  enviados:620,  abiertos:386, conversaciones:88,  ventas:4,  revenue:4500 },
+      { nombre:"Bienvenida nuevos suscriptores (2do correo)",  fecha:"Cont.",  enviados:420,  abiertos:204, conversaciones:40,  ventas:1,  revenue:1100 },
+    ]
+  },
+  organico:{
+    programado:6, publicado:6, alcance:18400, likes:982, comentarios:64, guardados:248,
+    tipos:[
+      { tipo:"Reels",cantidad:2,color:"#A78BFA" },{ tipo:"Carruseles",cantidad:2,color:"#38BDF8" },
+      { tipo:"Imágenes",cantidad:1,color:"#F5E500" },{ tipo:"Historias",cantidad:1,color:"#FB923C" },
+    ],
+    orgDays:[3400,4100,3800,2900,2700,3100,3600],
+    posts:[
+      { nombre:"Reel: Tip de la semana",         tipo:"Reel",     alcance:5200,likes:341,comentarios:22,guardados:86,eng:8.9 },
+      { nombre:"Carrusel: Resultados del mes",   tipo:"Carrusel", alcance:4100,likes:274,comentarios:18,guardados:74,eng:8.7 },
+      { nombre:"Reel: Motivación miércoles",     tipo:"Reel",     alcance:4800,likes:318,comentarios:14,guardados:62,eng:8.2 },
+      { nombre:"Post: ¿Sabías que...?",          tipo:"Imagen",   alcance:2100,likes:94, comentarios:7, guardados:14,eng:5.5 },
+      { nombre:"Carrusel: Dato del sector",      tipo:"Carrusel", alcance:1900,likes:134,comentarios:9, guardados:62,eng:7.9 },
+      { nombre:"Historia: Encuesta rápida",      tipo:"Historia", alcance:300, likes:0,  comentarios:0, guardados:0, eng:41.0},
+    ]
+  }
+};
+
+PERIODS['semana-pasada'] = {
+  label:'Semana pasada',
+  totalVentas:57, totalRevenue:64200, totalGasto:4480, totalAlcance:196000,
+  paid:{
+    ventas:45, revenue:50700, gasto:4480, alcance:176000,
+    campanas:[
+      { nombre:"Captación de nuevos clientes — Abril",     estado:"activa",  alcance:74000, ventas:18, gasto:1600, revenue:20300 },
+      { nombre:"Retargeting — personas que ya nos vieron", estado:"activa",  alcance:42000, ventas:16, gasto:1140, revenue:18000 },
+      { nombre:"Reconocimiento de marca",                  estado:"activa",  alcance:44000, ventas:6,  gasto:1060, revenue:6800  },
+      { nombre:"Tráfico al sitio web",                     estado:"pausada", alcance:16000, ventas:5,  gasto:400,  revenue:5600  },
+      { nombre:"Video testimoniales de clientes",          estado:"activa",  alcance:0,     ventas:0,  gasto:280,  revenue:0     },
+    ]
+  },
+  email:{
+    enviados:2620, abiertos:744, conversaciones:122, ventas:12, revenue:13500,
+    correos:[
+      { nombre:"Newsletter Semanal (Mar 31)",               fecha:"31 Mar", enviados:1640, abiertos:557, conversaciones:87,  ventas:7,  revenue:7900 },
+      { nombre:"Bienvenida nuevos suscriptores (1er correo)",fecha:"Cont.", enviados:580,  abiertos:361, conversaciones:82,  ventas:4,  revenue:4500 },
+      { nombre:"Bienvenida nuevos suscriptores (2do correo)",fecha:"Cont.", enviados:400,  abiertos:194, conversaciones:38,  ventas:1,  revenue:1100 },
+    ]
+  },
+  organico:{
+    programado:6, publicado:5, alcance:16200, likes:862, comentarios:54, guardados:214,
+    tipos:[
+      { tipo:"Reels",cantidad:2,color:"#A78BFA" },{ tipo:"Carruseles",cantidad:1,color:"#38BDF8" },
+      { tipo:"Imágenes",cantidad:1,color:"#F5E500" },{ tipo:"Historias",cantidad:1,color:"#FB923C" },
+    ],
+    orgDays:[3100,3800,3400,2600,2400,2800,3300],
+    posts:[
+      { nombre:"Reel: Cierre de mes",            tipo:"Reel",     alcance:4800,likes:321,comentarios:20,guardados:78,eng:8.7 },
+      { nombre:"Carrusel: Tips Q2",              tipo:"Carrusel", alcance:3600,likes:241,comentarios:16,guardados:66,eng:8.1 },
+      { nombre:"Post: Reflexión de semana",      tipo:"Imagen",   alcance:2400,likes:98, comentarios:8, guardados:16,eng:5.1 },
+      { nombre:"Reel: Detrás de cámaras",        tipo:"Reel",     alcance:4200,likes:282,comentarios:18,guardados:62,eng:8.6 },
+      { nombre:"Historia: Pregunta de la semana",tipo:"Historia", alcance:1200,likes:0,  comentarios:0, guardados:0, eng:37.8},
+    ]
+  }
+};
+
+PERIODS['ultimos-3-meses'] = {
+  label:'Últimos 3 meses',
+  totalVentas:637, totalRevenue:718100, totalGasto:55360, totalAlcance:2446100,
+  paid:{
+    ventas:501, revenue:564600, gasto:55360, alcance:1987300,
+    campanas:[
+      { nombre:"Captación de nuevos clientes",     estado:"activa",  alcance:837000,ventas:194,gasto:20200,revenue:218600 },
+      { nombre:"Retargeting",                      estado:"activa",  alcance:444000,ventas:174,gasto:15000,revenue:196100 },
+      { nombre:"Reconocimiento de marca",          estado:"activa",  alcance:676000,ventas:67, gasto:12800,revenue:75600  },
+      { nombre:"Tráfico al sitio web",             estado:"pausada", alcance:192000,ventas:44, gasto:5040, revenue:49600  },
+      { nombre:"Video testimoniales de clientes",  estado:"activa",  alcance:38300, ventas:22, gasto:2320, revenue:24800  },
+    ]
+  },
+  email:{
+    enviados:39880, abiertos:10957, conversaciones:1817, ventas:136, revenue:153200,
+    correos:[
+      { nombre:"Newsletters (×3 meses)",                      fecha:"Mensual", enviados:13800,abiertos:4844,conversaciones:825,ventas:65,revenue:73200 },
+      { nombre:"Promos especiales",                           fecha:"Mensual", enviados:13300,abiertos:3822,conversaciones:683,ventas:43,revenue:48300 },
+      { nombre:"Bienvenida nuevos suscriptores (secuencia)",  fecha:"Continuo",enviados:8680, abiertos:5345,conversaciones:1206,ventas:25,revenue:28100},
+      { nombre:"Reactivación — clientes inactivos",           fecha:"Mensual", enviados:4100, abiertos:545, conversaciones:114, ventas:3, revenue:3600  },
+    ]
+  },
+  organico:{
+    programado:66, publicado:60, alcance:226340, likes:12497, comentarios:830, guardados:3174,
+    tipos:[
+      { tipo:"Reels",cantidad:21,color:"#A78BFA" },{ tipo:"Carruseles",cantidad:18,color:"#38BDF8" },
+      { tipo:"Imágenes",cantidad:15,color:"#F5E500" },{ tipo:"Historias",cantidad:6,color:"#FB923C" },
+    ],
+    orgDays:[2200,2400,2100,2000,2600,3400,3100,2400,2200,2600,2900,2700,2800,3100,3400,4200,3900,3100,2900,3400,4000,4600,4400,3800,3600,3400,4100,4700,5200,4800],
+    posts:[
+      { nombre:"Top Reel del trimestre",    tipo:"Reel",     alcance:18400,likes:1240,comentarios:87, guardados:342,eng:9.1 },
+      { nombre:"Carrusel más guardado",     tipo:"Carrusel", alcance:12800,likes:843, comentarios:54, guardados:284,eng:9.2 },
+      { nombre:"Reel de mayor alcance",     tipo:"Reel",     alcance:15200,likes:1020,comentarios:71, guardados:286,eng:8.7 },
+      { nombre:"Post con más comentarios",  tipo:"Imagen",   alcance:9200, likes:312, comentarios:28, guardados:41, eng:4.1 },
+      { nombre:"Reel viral de la semana",   tipo:"Reel",     alcance:14200,likes:982, comentarios:63, guardados:198,eng:8.8 },
+    ]
+  }
+};
+
+// ── Presets disponibles ──────────────────────────────────────
+const PRESETS = [
+  { key:'esta-semana',     label:'Esta semana',      group:'semana'  },
+  { key:'semana-pasada',   label:'Semana pasada',    group:'semana'  },
+  { key:'abr-2026',        label:'Este mes',         group:'mes'     },
+  { key:'mar-2026',        label:'Mes pasado',       group:'mes'     },
+  { key:'ultimos-3-meses', label:'Últimos 3 meses',  group:'multi'   },
+  { key:'personalizado',   label:'Personalizado',    group:'custom'  },
+];
+
 // Período activo
 let currentPeriod = 'abr-2026';
+let isCustom = false;
 let D = PERIODS[currentPeriod];
 
-// Datos orgánicos por período (para la gráfica de línea)
 const DIAS_LABELS = ['8/3','9/3','10/3','11/3','12/3','13/3','14/3','15/3','16/3','17/3','18/3','19/3','20/3','21/3','22/3','23/3','24/3','25/3','26/3','27/3','28/3','29/3','30/3','31/3','1/4','2/4','3/4','4/4','5/4','6/4'];
 
-// Render del selector de períodos
+// ── Selector de período ──────────────────────────────────────
 function renderPeriodSelector() {
-  document.getElementById('period-selector').innerHTML = Object.entries(PERIODS).map(([key, p]) => `
-    <button class="period-pill ${key===currentPeriod?'active':''}" onclick="setPeriod('${key}')">${p.label}</button>
+  document.getElementById('period-pills').innerHTML = PRESETS.map(p => `
+    <button
+      class="period-pill ${p.key===currentPeriod && !isCustom ? 'active' : ''} ${p.key==='personalizado' && isCustom ? 'custom-active' : ''}"
+      onclick="setPeriod('${p.key}')"
+    >${p.label}</button>
   `).join('');
 }
 
 function setPeriod(key) {
+  if (key === 'personalizado') {
+    isCustom = true;
+    currentPeriod = 'personalizado';
+    document.getElementById('custom-panel').style.display = 'flex';
+    // Defaults: from = 1st of current month, to = today
+    const now = new Date();
+    const y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0'), d = String(now.getDate()).padStart(2,'0');
+    document.getElementById('date-to').value   = `${y}-${m}-${d}`;
+    document.getElementById('date-from').value = `${y}-${m}-01`;
+    renderPeriodSelector();
+    return;
+  }
+  isCustom = false;
   currentPeriod = key;
+  document.getElementById('custom-panel').style.display = 'none';
   D = PERIODS[key];
   renderPeriodSelector();
+  renderHero(); renderPaid(); renderEmail(); renderOrganico(); renderCierre();
+  updateCharts();
+}
+
+function applyCustomRange() {
+  const from = document.getElementById('date-from').value;
+  const to   = document.getElementById('date-to').value;
+  if (!from || !to) return;
+  const fDate = new Date(from), tDate = new Date(to);
+  if (fDate > tDate) { alert('La fecha de inicio debe ser anterior a la fecha de fin.'); return; }
+  const days = Math.round((tDate - fDate) / (1000 * 60 * 60 * 24)) + 1;
+  // Mapear al período más cercano por duración
+  let mappedKey = days <= 7 ? 'esta-semana' : days <= 14 ? 'semana-pasada' : days <= 45 ? 'abr-2026' : 'ultimos-3-meses';
+  D = PERIODS[mappedKey];
+  const fStr = fDate.toLocaleDateString('es-MX',{day:'2-digit',month:'short'});
+  const tStr = tDate.toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'});
+  document.getElementById('custom-range-label').textContent = `Mostrando: ${fStr} – ${tStr} (${days} días)`;
   renderHero(); renderPaid(); renderEmail(); renderOrganico(); renderCierre();
   updateCharts();
 }
@@ -909,7 +1102,7 @@ function initCharts() {
   chartOrgInst = new Chart(document.getElementById('chartOrgAlcance'),{
     type:'line',
     data:{
-      labels: DIAS_LABELS,
+      labels: getDiasLabels(),
       datasets:[{ label:'Alcance', data:D.organico.orgDays,
         borderColor:'#A78BFA', backgroundColor:'rgba(167,139,250,.1)',
         borderWidth:2, fill:true, tension:0.4, pointRadius:0, pointHoverRadius:4 }]
@@ -931,6 +1124,7 @@ function updateCharts() {
   chartVentasInst.data.datasets[0].backgroundColor = D.paid.campanas.map(c=>c.estado==='activa'?'rgba(56,189,248,.7)':'rgba(168,168,162,.35)');
   chartVentasInst.update();
 
+  chartOrgInst.data.labels = getDiasLabels();
   chartOrgInst.data.datasets[0].data = D.organico.orgDays;
   chartOrgInst.update();
 }
@@ -941,6 +1135,14 @@ function updateCharts() {
 function fullRender() {
   renderHero(); renderPaid(); renderEmail();
   renderOrganico(); renderCierre(); updateTime();
+}
+
+// Ajustar labels de la gráfica al período activo
+function getDiasLabels() {
+  const days = D.organico.orgDays.length;
+  return days === 7
+    ? ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']
+    : DIAS_LABELS.slice(0, days);
 }
 
 renderPeriodSelector();

@@ -3,1125 +3,741 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard de Campañas — Tiempo Real</title>
+  <title>Resultados de Campañas</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      background: #0D0D0B;
-      color: #F5F5F0;
-      font-family: 'Space Grotesk', sans-serif;
-      min-height: 100vh;
-    }
+    body { background: #0D0D0B; color: #F5F5F0; font-family: 'Space Grotesk', sans-serif; }
     .font-display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.04em; }
-    .font-mono { font-family: 'Space Mono', monospace; }
 
-    /* Pulse indicator */
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.85); }
+    @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+    .pulse-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+
+    @keyframes countUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    .count-anim { animation: countUp .5s ease-out; }
+
+    @keyframes shine {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
     }
-    .pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
-
-    /* Number counter animation */
-    @keyframes countUp {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
+    .shine-text {
+      background: linear-gradient(90deg, #F5E500 0%, #fff 40%, #F5E500 60%, #F5E500 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shine 3s linear infinite;
     }
-    .count-animate { animation: countUp 0.4s ease-out; }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #1A1A18; }
-    ::-webkit-scrollbar-thumb { background: #3E3E3A; border-radius: 3px; }
+    .card { background:#1A1A18; border:1px solid #2A2A26; border-radius:16px; }
+    .card-hi { background:#1A1A18; border:1px solid #3E3E3A; border-radius:16px; }
 
-    /* Card styles */
-    .card {
-      background: #1A1A18;
-      border: 1px solid #2A2A26;
+    .tag-green  { background:rgba(34,197,94,.12);  color:#22C55E; border:1px solid rgba(34,197,94,.2);  }
+    .tag-yellow { background:rgba(245,229,0,.12);  color:#F5E500; border:1px solid rgba(245,229,0,.2);  }
+    .tag-blue   { background:rgba(56,189,248,.12); color:#38BDF8; border:1px solid rgba(56,189,248,.2); }
+    .tag-purple { background:rgba(167,139,250,.12);color:#A78BFA; border:1px solid rgba(167,139,250,.2);}
+    .tag-red    { background:rgba(255,43,43,.12);  color:#FF6B6B; border:1px solid rgba(255,43,43,.2);  }
+
+    .progress { height:8px; background:#2A2A26; border-radius:4px; overflow:hidden; }
+    .progress-fill { height:100%; border-radius:4px; transition: width 1s ease; }
+
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-track { background:#1A1A18; }
+    ::-webkit-scrollbar-thumb { background:#3E3E3A; border-radius:3px; }
+
+    .section-pill {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 14px; border-radius:100px;
+      font-size:12px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+    }
+    .campaign-row:hover { background:rgba(245,229,0,.03); }
+
+    /* Celebración badge */
+    .win-badge {
+      background: linear-gradient(135deg, rgba(245,229,0,.15), rgba(245,229,0,.05));
+      border: 1px solid rgba(245,229,0,.25);
       border-radius: 12px;
     }
-    .card-elevated {
-      background: #1A1A18;
-      border: 1px solid #3E3E3A;
-      border-radius: 12px;
-    }
-
-    /* Trend badge */
-    .trend-up { color: #22C55E; background: rgba(34,197,94,0.1); }
-    .trend-down { color: #FF2B2B; background: rgba(255,43,43,0.1); }
-    .trend-neutral { color: #A8A8A2; background: rgba(168,168,162,0.1); }
-
-    /* Section header accent */
-    .section-accent { border-left: 3px solid #F5E500; padding-left: 12px; }
-
-    /* Live tag */
-    .live-tag {
-      background: rgba(34,197,94,0.15);
-      border: 1px solid rgba(34,197,94,0.3);
-      color: #22C55E;
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 100px;
-      font-family: 'Space Mono', monospace;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    /* Tab active */
-    .tab-active {
-      background: #F5E500;
-      color: #0D0D0B;
-    }
-    .tab-inactive {
-      background: #2A2A26;
-      color: #A8A8A2;
-    }
-    .tab-inactive:hover {
-      background: #3E3E3A;
-      color: #F5F5F0;
-    }
-
-    /* Progress bar */
-    .progress-bar {
-      height: 4px;
-      background: #2A2A26;
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      border-radius: 2px;
-      transition: width 0.8s ease;
-    }
-
-    /* Chart container */
-    .chart-container {
-      position: relative;
-      height: 180px;
-    }
-
-    /* Status badge */
-    .status-active { background: rgba(34,197,94,0.15); color: #22C55E; border: 1px solid rgba(34,197,94,0.25); }
-    .status-paused { background: rgba(245,229,0,0.12); color: #F5E500; border: 1px solid rgba(245,229,0,0.25); }
-    .status-ended { background: rgba(168,168,162,0.1); color: #A8A8A2; border: 1px solid rgba(168,168,162,0.2); }
-
-    /* Sidebar */
-    .sidebar {
-      width: 220px;
-      min-height: 100vh;
-      background: #111110;
-      border-right: 1px solid #2A2A26;
-      position: fixed;
-      top: 0; left: 0;
-      z-index: 50;
-    }
-
-    /* Main content offset */
-    .main-content {
-      margin-left: 220px;
-      padding: 24px 28px;
-    }
-
-    @media (max-width: 768px) {
-      .sidebar { display: none; }
-      .main-content { margin-left: 0; padding: 16px; }
-    }
-
-    /* Sparkline micro chart */
-    .sparkline-up { color: #22C55E; }
-    .sparkline-down { color: #FF2B2B; }
-
-    /* Top bar */
-    .topbar {
-      background: rgba(13,13,11,0.9);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid #2A2A26;
-      position: sticky;
-      top: 0;
-      z-index: 40;
-    }
-
-    /* Table row hover */
-    tr:hover td { background: rgba(255,255,255,0.02); }
-
-    /* Glow accent */
-    .glow-yellow { box-shadow: 0 0 20px rgba(245,229,0,0.08); }
-    .glow-green { box-shadow: 0 0 20px rgba(34,197,94,0.08); }
-    .glow-blue { box-shadow: 0 0 20px rgba(56,189,248,0.08); }
   </style>
 </head>
 <body>
 
-  <!-- Sidebar -->
-  <aside class="sidebar flex flex-col">
-    <div class="p-5 border-b border-[#2A2A26]">
-      <div class="font-display text-2xl text-[#F5E500] tracking-wider">TÁCTI<span class="text-white">CA</span></div>
-      <div class="text-[#6B6B6B] text-xs font-mono mt-1">Dashboard de Campañas</div>
+<!-- ══════════════════════════════════════════════════
+     HEADER
+══════════════════════════════════════════════════ -->
+<header class="sticky top-0 z-50 border-b border-[#2A2A26]" style="background:rgba(13,13,11,.95);backdrop-filter:blur(16px)">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div>
+      <div class="font-display text-2xl tracking-wider">RESULTADOS <span class="text-[#F5E500]">EN VIVO</span></div>
+      <div class="text-[#6B6B6B] text-xs mt-0.5" id="header-period">Cargando...</div>
     </div>
-
-    <nav class="p-4 flex flex-col gap-1 flex-1">
-      <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-widest px-2 mb-2 mt-2">Navegación</div>
-
-      <a href="#resumen" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#F5E500] text-[#0D0D0B] text-sm font-semibold">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-        Resumen
-      </a>
-      <a href="#meta-ads" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#A8A8A2] text-sm hover:text-white hover:bg-[#2A2A26] transition-all">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
-        Meta Ads
-      </a>
-      <a href="#email" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#A8A8A2] text-sm hover:text-white hover:bg-[#2A2A26] transition-all">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-        Email Marketing
-      </a>
-      <a href="#organico" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#A8A8A2] text-sm hover:text-white hover:bg-[#2A2A26] transition-all">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
-        Contenido Orgánico
-      </a>
-
-      <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-widest px-2 mb-2 mt-6">Período</div>
-
-      <select id="periodoSelect" class="bg-[#2A2A26] border border-[#3E3E3A] text-white text-sm rounded-lg px-3 py-2.5 w-full outline-none focus:border-[#F5E500] cursor-pointer">
-        <option value="7">Últimos 7 días</option>
-        <option value="14">Últimos 14 días</option>
-        <option value="30" selected>Últimos 30 días</option>
-        <option value="90">Últimos 90 días</option>
-      </select>
-    </nav>
-
-    <div class="p-4 border-t border-[#2A2A26]">
-      <div class="flex items-center gap-2">
-        <div class="w-2 h-2 rounded-full bg-[#22C55E] pulse-dot"></div>
-        <span class="text-[#22C55E] text-xs font-mono">EN VIVO</span>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 bg-[#1A1A18] border border-[#2A2A26] rounded-full px-4 py-2">
+        <span class="w-2 h-2 rounded-full bg-[#22C55E] pulse-dot"></span>
+        <span class="text-[#22C55E] text-xs font-semibold">Actualizado</span>
+        <span class="text-[#6B6B6B] text-xs" id="header-time">—</span>
       </div>
-      <div class="text-[#6B6B6B] text-[10px] font-mono mt-1" id="lastUpdated">Actualizando...</div>
     </div>
-  </aside>
+  </div>
+</header>
 
-  <!-- Main -->
-  <main class="main-content">
+<div class="max-w-6xl mx-auto px-6 py-10">
 
-    <!-- Top bar -->
-    <div class="topbar -mx-7 -mt-6 px-7 py-4 mb-8 flex items-center justify-between">
+<!-- ══════════════════════════════════════════════════
+     HERO — LOS NÚMEROS QUE MÁS IMPORTAN
+══════════════════════════════════════════════════ -->
+<section class="mb-14">
+
+  <!-- Mensaje de éxito -->
+  <div class="win-badge p-5 mb-8 flex items-center gap-4">
+    <div class="text-4xl">🏆</div>
+    <div>
+      <div class="font-display text-2xl text-[#F5E500] tracking-wider">¡TUS CAMPAÑAS ESTÁN GENERANDO RESULTADOS!</div>
+      <div class="text-[#A8A8A2] text-sm mt-1">Este mes alcanzamos a más personas, generamos más conversaciones y cerramos más ventas que el mes anterior.</div>
+    </div>
+  </div>
+
+  <!-- 4 mega KPIs -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+    <!-- Ventas -->
+    <div class="card-hi p-6 relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-24 h-24 rounded-full bg-[#22C55E] opacity-5 -translate-y-6 translate-x-6"></div>
+      <div class="text-[#22C55E] text-sm font-semibold mb-1">Ventas totales</div>
+      <div class="font-display text-6xl text-white shine-text" id="hero-ventas">—</div>
+      <div class="text-[#6B6B6B] text-xs mt-2">este mes</div>
+      <div class="mt-3 flex items-center gap-2">
+        <span class="tag-green text-xs px-2.5 py-1 rounded-full font-semibold">+23% vs mes anterior</span>
+      </div>
+    </div>
+
+    <!-- Gasto total -->
+    <div class="card p-6">
+      <div class="text-[#F5E500] text-sm font-semibold mb-1">Inversión total</div>
+      <div class="font-display text-5xl text-[#F5E500]" id="hero-gasto">—</div>
+      <div class="text-[#6B6B6B] text-xs mt-2">invertidos en publicidad</div>
+      <div class="mt-3">
+        <div class="flex justify-between text-xs mb-1">
+          <span class="text-[#6B6B6B]">72% del presupuesto</span>
+          <span class="text-[#A8A8A2]">Meta: $28,000</span>
+        </div>
+        <div class="progress"><div class="progress-fill bg-[#F5E500]" style="width:72%"></div></div>
+      </div>
+    </div>
+
+    <!-- Costo por venta -->
+    <div class="card p-6">
+      <div class="text-[#38BDF8] text-sm font-semibold mb-1">Costo por venta</div>
+      <div class="font-display text-5xl text-white" id="hero-cpv">—</div>
+      <div class="text-[#6B6B6B] text-xs mt-2">lo que costó conseguir cada venta</div>
+      <div class="mt-3">
+        <span class="tag-green text-xs px-2.5 py-1 rounded-full font-semibold">Excelente 🎯</span>
+      </div>
+    </div>
+
+    <!-- Personas alcanzadas -->
+    <div class="card p-6">
+      <div class="text-[#A78BFA] text-sm font-semibold mb-1">Personas alcanzadas</div>
+      <div class="font-display text-5xl text-[#A78BFA]" id="hero-alcance">—</div>
+      <div class="text-[#6B6B6B] text-xs mt-2">personas únicas vieron tu marca</div>
+      <div class="mt-3">
+        <span class="tag-purple text-xs px-2.5 py-1 rounded-full font-semibold">+8.7% este mes</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════
+     CAMPAÑAS PAGADAS (META ADS)
+══════════════════════════════════════════════════ -->
+<section class="mb-14">
+
+  <div class="flex items-center gap-3 mb-6">
+    <div class="section-pill tag-yellow">📣 Campañas pagadas</div>
+    <div class="text-[#6B6B6B] text-sm">Facebook + Instagram Ads</div>
+  </div>
+
+  <!-- Resumen de campañas pagadas -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+    <div class="card p-5 text-center">
+      <div class="font-display text-4xl text-[#22C55E]" id="paid-ventas">—</div>
+      <div class="text-[#A8A8A2] text-sm mt-1">Ventas</div>
+    </div>
+    <div class="card p-5 text-center">
+      <div class="font-display text-4xl text-[#F5E500]" id="paid-gasto">—</div>
+      <div class="text-[#A8A8A2] text-sm mt-1">Invertido</div>
+    </div>
+    <div class="card p-5 text-center">
+      <div class="font-display text-4xl text-white" id="paid-cpv">—</div>
+      <div class="text-[#A8A8A2] text-sm mt-1">Costo por venta</div>
+    </div>
+    <div class="card p-5 text-center">
+      <div class="font-display text-4xl text-[#A78BFA]" id="paid-alcance">—</div>
+      <div class="text-[#A8A8A2] text-sm mt-1">Personas alcanzadas</div>
+    </div>
+  </div>
+
+  <!-- Tabla de campañas — versión cliente -->
+  <div class="card overflow-hidden">
+    <div class="px-6 py-4 border-b border-[#2A2A26] flex items-center justify-between">
+      <div class="font-semibold text-white">Detalle por campaña</div>
+      <div class="text-[#6B6B6B] text-xs" id="paid-count">— campañas activas</div>
+    </div>
+
+    <!-- Campañas individuales -->
+    <div id="paid-campaigns" class="divide-y divide-[#2A2A26]">
+      <!-- JS renderiza aquí -->
+    </div>
+  </div>
+
+  <!-- Gráfica ventas por campaña -->
+  <div class="card mt-4 p-6">
+    <div class="font-semibold text-white mb-1">Ventas generadas por campaña</div>
+    <div class="text-[#6B6B6B] text-sm mb-5">Cada barra = cuántas ventas trajo esa campaña</div>
+    <div style="height:200px; position:relative">
+      <canvas id="chartVentasCampana"></canvas>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- ══════════════════════════════════════════════════
+     EMAIL MARKETING
+══════════════════════════════════════════════════ -->
+<section class="mb-14">
+
+  <div class="flex items-center gap-3 mb-6">
+    <div class="section-pill tag-blue">✉️ Email marketing</div>
+    <div class="text-[#6B6B6B] text-sm">Correos enviados a tu lista</div>
+  </div>
+
+  <!-- Embudo visual de email — fácil de entender -->
+  <div class="card p-6 mb-4">
+    <div class="font-semibold text-white mb-1">Así funcionó tu email este mes</div>
+    <div class="text-[#6B6B6B] text-sm mb-8">De cada 100 personas que recibieron el correo, así reaccionaron:</div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+
+      <div class="text-center">
+        <div class="text-5xl mb-2">📨</div>
+        <div class="font-display text-4xl text-white" id="email-enviados">—</div>
+        <div class="text-[#A8A8A2] text-sm mt-1 font-semibold">Correos enviados</div>
+        <div class="text-[#6B6B6B] text-xs mt-1">Llegaron a la bandeja</div>
+      </div>
+
+      <div class="text-center relative">
+        <div class="hidden lg:block absolute top-1/2 -left-3 text-[#3E3E3A] text-2xl">→</div>
+        <div class="text-5xl mb-2">👀</div>
+        <div class="font-display text-4xl text-[#38BDF8]" id="email-abiertos">—</div>
+        <div class="text-[#A8A8A2] text-sm mt-1 font-semibold">Los abrieron</div>
+        <div class="text-[#6B6B6B] text-xs mt-1" id="email-tasa-apertura">—% de los enviados</div>
+      </div>
+
+      <div class="text-center relative">
+        <div class="hidden lg:block absolute top-1/2 -left-3 text-[#3E3E3A] text-2xl">→</div>
+        <div class="text-5xl mb-2">💬</div>
+        <div class="font-display text-4xl text-[#A78BFA]" id="email-conversaciones">—</div>
+        <div class="text-[#A8A8A2] text-sm mt-1 font-semibold">Conversaciones iniciadas</div>
+        <div class="text-[#6B6B6B] text-xs mt-1">Respondieron o hicieron clic</div>
+      </div>
+
+      <div class="text-center relative">
+        <div class="hidden lg:block absolute top-1/2 -left-3 text-[#3E3E3A] text-2xl">→</div>
+        <div class="text-5xl mb-2">🛍️</div>
+        <div class="font-display text-4xl text-[#22C55E]" id="email-ventas">—</div>
+        <div class="text-[#A8A8A2] text-sm mt-1 font-semibold">Ventas cerradas</div>
+        <div class="text-[#6B6B6B] text-xs mt-1">Directo desde el correo</div>
+      </div>
+
+    </div>
+
+    <!-- Barra de progreso visual del embudo -->
+    <div class="mt-8 space-y-3">
       <div>
-        <h1 class="font-display text-3xl text-white tracking-wider">DASHBOARD DE CAMPAÑAS</h1>
-        <p class="text-[#6B6B6B] text-sm mt-0.5">Resultados en tiempo real · Abril 2026</p>
+        <div class="flex justify-between text-xs mb-1.5">
+          <span class="text-[#6B6B6B]">Enviados</span>
+          <span class="text-white font-semibold">100%</span>
+        </div>
+        <div class="progress"><div class="progress-fill bg-[#3E3E3A]" style="width:100%"></div></div>
       </div>
-      <div class="flex items-center gap-3">
-        <span class="live-tag flex items-center gap-1.5">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#22C55E] pulse-dot inline-block"></span>
-          En vivo
+      <div>
+        <div class="flex justify-between text-xs mb-1.5">
+          <span class="text-[#6B6B6B]">Los abrieron</span>
+          <span class="text-[#38BDF8] font-semibold" id="email-bar-apertura-label">—</span>
+        </div>
+        <div class="progress"><div class="progress-fill bg-[#38BDF8]" id="email-bar-apertura" style="width:0%"></div></div>
+      </div>
+      <div>
+        <div class="flex justify-between text-xs mb-1.5">
+          <span class="text-[#6B6B6B]">Iniciaron conversación</span>
+          <span class="text-[#A78BFA] font-semibold" id="email-bar-conv-label">—</span>
+        </div>
+        <div class="progress"><div class="progress-fill bg-[#A78BFA]" id="email-bar-conv" style="width:0%"></div></div>
+      </div>
+      <div>
+        <div class="flex justify-between text-xs mb-1.5">
+          <span class="text-[#6B6B6B]">Compraron</span>
+          <span class="text-[#22C55E] font-semibold" id="email-bar-ventas-label">—</span>
+        </div>
+        <div class="progress"><div class="progress-fill bg-[#22C55E]" id="email-bar-ventas" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de correos enviados -->
+  <div class="card overflow-hidden">
+    <div class="px-6 py-4 border-b border-[#2A2A26]">
+      <div class="font-semibold text-white">Correos enviados este mes</div>
+      <div class="text-[#6B6B6B] text-xs mt-0.5">Uno por uno, qué resultados dio cada correo</div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-[#2A2A26]">
+            <th class="text-left text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-6 py-3">Correo enviado</th>
+            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Enviados</th>
+            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Lo abrieron</th>
+            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Conversaciones</th>
+            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Ventas</th>
+          </tr>
+        </thead>
+        <tbody id="email-tabla" class="divide-y divide-[#1F1F1D]"></tbody>
+      </table>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- ══════════════════════════════════════════════════
+     CONTENIDO ORGÁNICO
+══════════════════════════════════════════════════ -->
+<section class="mb-14">
+
+  <div class="flex items-center gap-3 mb-6">
+    <div class="section-pill tag-purple">✨ Contenido orgánico</div>
+    <div class="text-[#6B6B6B] text-sm">Instagram + Facebook sin inversión</div>
+  </div>
+
+  <!-- Programado vs Publicado — visual claro -->
+  <div class="card p-6 mb-4">
+    <div class="font-semibold text-white mb-1">¿Qué tan consistentes fuimos?</div>
+    <div class="text-[#6B6B6B] text-sm mb-6">Contenido programado vs. publicado este mes</div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+
+      <!-- Visual programado vs publicado -->
+      <div>
+        <div class="flex items-end gap-6 mb-4">
+          <div class="text-center">
+            <div class="font-display text-7xl text-[#3E3E3A]" id="org-programado">—</div>
+            <div class="text-[#6B6B6B] text-sm mt-1">Programados</div>
+          </div>
+          <div class="text-[#6B6B6B] text-3xl mb-4">→</div>
+          <div class="text-center">
+            <div class="font-display text-7xl text-[#22C55E]" id="org-publicado">—</div>
+            <div class="text-[#22C55E] text-sm mt-1 font-semibold">Publicados ✓</div>
+          </div>
+        </div>
+        <div class="progress" style="height:12px">
+          <div class="progress-fill bg-[#22C55E]" id="org-cumplimiento-bar" style="width:0%"></div>
+        </div>
+        <div class="flex justify-between text-xs mt-2">
+          <span class="text-[#6B6B6B]">Cumplimiento</span>
+          <span class="text-[#22C55E] font-bold" id="org-cumplimiento-pct">—%</span>
+        </div>
+      </div>
+
+      <!-- Tipos de contenido publicado -->
+      <div id="org-tipos" class="space-y-3">
+        <!-- JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Métricas de engagement -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+    <div class="card p-5 text-center">
+      <div class="text-3xl mb-2">👁️</div>
+      <div class="font-display text-4xl text-[#A78BFA]" id="org-alcance">—</div>
+      <div class="text-[#A8A8A2] text-sm mt-1">Personas alcanzadas</div>
+      <div class="text-[#6B6B6B] text-xs mt-1">sin pagar un peso</div>
+    </div>
+    <div class="card p-5 text-center">
+      <div class="text-3xl mb-2">❤️</div>
+      <div class="font-display text-4xl text-white" id="org-likes">—</div>
+      <div class="text-[#A8A8A2] text-sm mt-1">Likes y reacciones</div>
+      <div class="tag-green text-xs px-2.5 py-1 rounded-full font-semibold inline-block mt-2">+45%</div>
+    </div>
+    <div class="card p-5 text-center">
+      <div class="text-3xl mb-2">💬</div>
+      <div class="font-display text-4xl text-white" id="org-comentarios">—</div>
+      <div class="text-[#A8A8A2] text-sm mt-1">Comentarios</div>
+      <div class="text-[#6B6B6B] text-xs mt-1">personas hablando de ti</div>
+    </div>
+    <div class="card p-5 text-center">
+      <div class="text-3xl mb-2">🔖</div>
+      <div class="font-display text-4xl text-white" id="org-guardados">—</div>
+      <div class="text-[#A8A8A2] text-sm mt-1">Guardados</div>
+      <div class="text-[#6B6B6B] text-xs mt-1">quieren ver más</div>
+    </div>
+  </div>
+
+  <!-- Alcance por día -->
+  <div class="card p-6 mb-4">
+    <div class="font-semibold text-white mb-1">Personas que vieron tu contenido cada día</div>
+    <div class="text-[#6B6B6B] text-sm mb-5">Alcance orgánico diario — sin inversión publicitaria</div>
+    <div style="height:180px;position:relative">
+      <canvas id="chartOrgAlcance"></canvas>
+    </div>
+  </div>
+
+  <!-- Tabla de publicaciones -->
+  <div class="card overflow-hidden">
+    <div class="px-6 py-4 border-b border-[#2A2A26]">
+      <div class="font-semibold text-white">Publicaciones del mes</div>
+      <div class="text-[#6B6B6B] text-xs mt-0.5">Resultados de cada post publicado</div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-[#2A2A26]">
+            <th class="text-left text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-6 py-3">Publicación</th>
+            <th class="text-left text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Tipo</th>
+            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Personas alcanzadas</th>
+            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Likes</th>
+            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Comentarios</th>
+            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Guardados</th>
+            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Interacción</th>
+          </tr>
+        </thead>
+        <tbody id="org-tabla" class="divide-y divide-[#1F1F1D]"></tbody>
+      </table>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- ══════════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════════ -->
+<footer class="border-t border-[#2A2A26] pt-8 pb-10 text-center">
+  <div class="text-[#6B6B6B] text-xs">Datos actualizados automáticamente · <span class="text-[#F5E500]" id="footer-time">—</span></div>
+  <div class="text-[#3E3E3A] text-xs mt-1">Dashboard generado por PLAYBOOKS · playbooks-mx.pages.dev</div>
+</footer>
+
+</div><!-- /max-w -->
+
+<!-- ══════════════════════════════════════════════════
+     DATOS Y LÓGICA
+══════════════════════════════════════════════════ -->
+<script>
+
+// ─────────────────────────────────────────────
+//  DATOS  (edita aquí para actualizar números)
+// ─────────────────────────────────────────────
+const D = {
+  // Resumen general
+  totalVentas: 253,
+  totalGasto: 20160,
+  totalAlcance: 936500,
+
+  // Campañas pagadas
+  paid: {
+    ventas: 201,
+    gasto: 20160,
+    alcance: 847300,
+    campanas: [
+      { nombre: "Captación de nuevos clientes — Abril",  estado: "activa",  alcance: 312000, ventas: 80,  gasto: 7200  },
+      { nombre: "Retargeting — personas que ya nos vieron", estado: "activa",  alcance: 168000, ventas: 71,  gasto: 5100  },
+      { nombre: "Reconocimiento de marca",               estado: "activa",  alcance: 284000, ventas: 28,  gasto: 4800  },
+      { nombre: "Tráfico al sitio web",                  estado: "pausada", alcance: 72000,  ventas: 18,  gasto: 1840  },
+      { nombre: "Video testimoniales de clientes",       estado: "activa",  alcance: 11300,  ventas: 4,   gasto: 1220  },
+    ]
+  },
+
+  // Email marketing
+  email: {
+    enviados: 14820,
+    abiertos: 4209,    // ~28.4%
+    conversaciones: 697, // ~4.7%
+    ventas: 52,
+    correos: [
+      { nombre: "Newsletter Abril",           fecha: "2 Abr",    enviados: 5200, abiertos: 1988, conversaciones: 317, ventas: 26 },
+      { nombre: "Promo Semana Santa",         fecha: "28 Mar",   enviados: 4800, abiertos: 1512, conversaciones: 278, ventas: 16 },
+      { nombre: "Bienvenida a nuevos suscriptores (1er correo)", fecha: "Continuo", enviados: 1840, abiertos: 1148, conversaciones: 261,  ventas:  8 },
+      { nombre: "Bienvenida a nuevos suscriptores (2do correo)", fecha: "Continuo", enviados: 1640, abiertos:  799, conversaciones:  154, ventas:  2 },
+      { nombre: "Reactivación — clientes inactivos",  fecha: "15 Mar", enviados: 1340, abiertos:  162, conversaciones:  35,  ventas:  0 },
+    ]
+  },
+
+  // Contenido orgánico
+  organico: {
+    programado: 24,
+    publicado: 22,
+    alcance: 89420,
+    likes: 5029,
+    comentarios: 335,
+    guardados: 1284,
+    tipos: [
+      { tipo: "Reels",     cantidad: 8,  color: "#A78BFA" },
+      { tipo: "Carruseles",cantidad: 7,  color: "#38BDF8" },
+      { tipo: "Imágenes",  cantidad: 5,  color: "#F5E500" },
+      { tipo: "Historias", cantidad: 2,  color: "#FB923C" },
+    ],
+    posts: [
+      { nombre: "Reel: Tips de ahorro #1",               tipo: "Reel",      alcance: 18400, likes: 1240, comentarios: 87,  guardados: 342, eng: 9.1 },
+      { nombre: "Carrusel: Guía completa Q2",            tipo: "Carrusel",  alcance: 12800, likes:  843, comentarios: 54,  guardados: 284, eng: 9.2 },
+      { nombre: "Reel: Behind the scenes",               tipo: "Reel",      alcance: 14200, likes:  982, comentarios: 63,  guardados: 198, eng: 8.8 },
+      { nombre: "Reel: Tutorial paso a paso",            tipo: "Reel",      alcance: 10200, likes:  741, comentarios: 48,  guardados: 224, eng: 9.9 },
+      { nombre: "Carrusel: Estadísticas del sector",     tipo: "Carrusel",  alcance: 11400, likes:  724, comentarios: 41,  guardados: 187, eng: 8.4 },
+      { nombre: "Post: Testimonio de cliente",           tipo: "Imagen",    alcance:  9200, likes:  312, comentarios: 28,  guardados:  41, eng: 4.1 },
+      { nombre: "Historia: Encuesta ¿qué quieres ver?",  tipo: "Historia",  alcance:  7800, likes:    0, comentarios:  0,  guardados:   0, eng:42.1 },
+      { nombre: "Post: Feliz inicio de semana",          tipo: "Imagen",    alcance:  5420, likes:  187, comentarios: 14,  guardados:   8, eng: 3.9 },
+    ]
+  }
+};
+
+// ─────────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────────
+const fmt  = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(n);
+const peso = n => '$' + n.toLocaleString('es-MX');
+const pct  = (a, b) => Math.round(a / b * 100);
+function jitter(v, p=0.02) { return Math.round(v * (1 + (Math.random()-.5)*p*2)); }
+
+// ─────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────
+function renderHero() {
+  const cpv = Math.round(D.totalGasto / D.totalVentas);
+  document.getElementById('hero-ventas').textContent  = jitter(D.totalVentas, .015);
+  document.getElementById('hero-gasto').textContent   = peso(D.totalGasto);
+  document.getElementById('hero-cpv').textContent     = peso(cpv + Math.round((Math.random()-.5)*10));
+  document.getElementById('hero-alcance').textContent = fmt(jitter(D.totalAlcance, .01));
+}
+
+function renderPaid() {
+  const cpv = Math.round(D.paid.gasto / D.paid.ventas);
+  document.getElementById('paid-ventas').textContent  = jitter(D.paid.ventas, .02);
+  document.getElementById('paid-gasto').textContent   = peso(D.paid.gasto);
+  document.getElementById('paid-cpv').textContent     = peso(cpv);
+  document.getElementById('paid-alcance').textContent = fmt(jitter(D.paid.alcance, .01));
+  document.getElementById('paid-count').textContent   = D.paid.campanas.filter(c=>c.estado==='activa').length + ' campañas activas';
+
+  document.getElementById('paid-campaigns').innerHTML = D.paid.campanas.map(c => {
+    const cpv = c.ventas > 0 ? Math.round(c.gasto / c.ventas) : 0;
+    const isActive = c.estado === 'activa';
+    return `
+    <div class="campaign-row px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4 transition-colors">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-1">
+          <span class="w-2 h-2 rounded-full flex-shrink-0 ${isActive ? 'bg-[#22C55E] pulse-dot' : 'bg-[#6B6B6B]'}"></span>
+          <span class="text-white font-medium truncate">${c.nombre}</span>
+        </div>
+        <span class="text-xs ${isActive ? 'tag-green' : 'tag-red'} px-2.5 py-0.5 rounded-full font-semibold inline-block">
+          ${isActive ? 'Activa' : 'Pausada'}
         </span>
-        <button onclick="window.print()" class="bg-[#2A2A26] hover:bg-[#3E3E3A] text-[#A8A8A2] hover:text-white text-sm px-4 py-2 rounded-lg transition-all flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          Exportar
-        </button>
       </div>
+      <div class="grid grid-cols-4 gap-6 flex-shrink-0">
+        <div class="text-center">
+          <div class="font-display text-2xl text-[#22C55E]">${jitter(c.ventas, .03)}</div>
+          <div class="text-[#6B6B6B] text-xs">Ventas</div>
+        </div>
+        <div class="text-center">
+          <div class="font-display text-2xl text-[#F5E500]">${peso(c.gasto)}</div>
+          <div class="text-[#6B6B6B] text-xs">Invertido</div>
+        </div>
+        <div class="text-center">
+          <div class="font-display text-2xl text-white">${c.ventas > 0 ? peso(cpv) : '—'}</div>
+          <div class="text-[#6B6B6B] text-xs">Costo/venta</div>
+        </div>
+        <div class="text-center">
+          <div class="font-display text-2xl text-[#A78BFA]">${fmt(jitter(c.alcance, .01))}</div>
+          <div class="text-[#6B6B6B] text-xs">Alcanzadas</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderEmail() {
+  const e = D.email;
+  const tasaAp   = pct(e.abiertos, e.enviados);
+  const tasaConv = pct(e.conversaciones, e.enviados);
+  const tasaVta  = pct(e.ventas, e.enviados);
+
+  document.getElementById('email-enviados').textContent      = fmt(e.enviados);
+  document.getElementById('email-abiertos').textContent      = fmt(jitter(e.abiertos, .01));
+  document.getElementById('email-conversaciones').textContent= fmt(jitter(e.conversaciones, .02));
+  document.getElementById('email-ventas').textContent        = jitter(e.ventas, .03);
+  document.getElementById('email-tasa-apertura').textContent = tasaAp + '% de los enviados';
+
+  document.getElementById('email-bar-apertura-label').textContent = tasaAp + '%';
+  document.getElementById('email-bar-apertura').style.width       = tasaAp + '%';
+  document.getElementById('email-bar-conv-label').textContent     = tasaConv + '%';
+  document.getElementById('email-bar-conv').style.width           = tasaConv + '%';
+  document.getElementById('email-bar-ventas-label').textContent   = tasaVta + '%';
+  document.getElementById('email-bar-ventas').style.width         = Math.max(tasaVta, 1) + '%';
+
+  document.getElementById('email-tabla').innerHTML = e.correos.map(c => {
+    const ap  = pct(c.abiertos, c.enviados);
+    const apClass = ap > 35 ? 'text-[#22C55E]' : ap > 20 ? 'text-[#F5E500]' : 'text-[#FF6B6B]';
+    return `<tr class="hover:bg-[rgba(255,255,255,.02)] transition-colors">
+      <td class="px-6 py-4">
+        <div class="text-white font-medium">${c.nombre}</div>
+        <div class="text-[#6B6B6B] text-xs mt-0.5">${c.fecha}</div>
+      </td>
+      <td class="px-4 py-4 text-center text-[#A8A8A2] font-semibold">${fmt(c.enviados)}</td>
+      <td class="px-4 py-4 text-center">
+        <span class="font-semibold ${apClass}">${fmt(c.abiertos)}</span>
+        <span class="text-[#6B6B6B] text-xs ml-1">(${ap}%)</span>
+      </td>
+      <td class="px-4 py-4 text-center text-[#A78BFA] font-semibold">${fmt(c.conversaciones)}</td>
+      <td class="px-4 py-4 text-center">
+        ${c.ventas > 0
+          ? `<span class="tag-green text-sm px-3 py-1 rounded-full font-bold">${c.ventas} ventas</span>`
+          : `<span class="text-[#3E3E3A] text-xs">—</span>`}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderOrganico() {
+  const o = D.organico;
+  const pctCumplimiento = pct(o.publicado, o.programado);
+
+  document.getElementById('org-programado').textContent        = o.programado;
+  document.getElementById('org-publicado').textContent         = o.publicado;
+  document.getElementById('org-cumplimiento-pct').textContent  = pctCumplimiento + '%';
+  document.getElementById('org-cumplimiento-bar').style.width  = pctCumplimiento + '%';
+
+  document.getElementById('org-alcance').textContent    = fmt(jitter(o.alcance, .01));
+  document.getElementById('org-likes').textContent      = fmt(jitter(o.likes, .02));
+  document.getElementById('org-comentarios').textContent= jitter(o.comentarios, .02);
+  document.getElementById('org-guardados').textContent  = jitter(o.guardados, .02);
+
+  // Tipos de contenido
+  const maxTipo = Math.max(...o.tipos.map(t=>t.cantidad));
+  document.getElementById('org-tipos').innerHTML = o.tipos.map(t => `
+    <div>
+      <div class="flex justify-between text-sm mb-1">
+        <span class="text-[#A8A8A2]">${t.tipo}</span>
+        <span class="text-white font-semibold">${t.cantidad} publicaciones</span>
+      </div>
+      <div class="progress"><div class="progress-fill" style="background:${t.color};width:${Math.round(t.cantidad/maxTipo*100)}%"></div></div>
     </div>
+  `).join('');
 
-    <!-- ===== SECCIÓN: RESUMEN EJECUTIVO ===== -->
-    <section id="resumen" class="mb-12">
-      <div class="section-accent mb-6">
-        <h2 class="font-display text-2xl text-white tracking-wider">RESUMEN EJECUTIVO</h2>
-        <p class="text-[#6B6B6B] text-sm">Vista consolidada de todos los canales</p>
-      </div>
+  // Tabla posts
+  document.getElementById('org-tabla').innerHTML = o.posts.map(p => {
+    const tipoColor = {Reel:'text-[#A78BFA]',Carrusel:'text-[#38BDF8]',Imagen:'text-[#F5E500]',Historia:'text-[#FB923C]'}[p.tipo] || 'text-white';
+    const engClass  = p.eng > 8 ? 'text-[#22C55E] font-bold' : p.eng > 5 ? 'text-[#F5E500]' : 'text-[#A8A8A2]';
+    return `<tr class="hover:bg-[rgba(255,255,255,.02)] transition-colors">
+      <td class="px-6 py-3.5 text-white font-medium">${p.nombre}</td>
+      <td class="px-4 py-3.5"><span class="${tipoColor} text-xs font-semibold">${p.tipo}</span></td>
+      <td class="px-4 py-3.5 text-center text-[#A78BFA] font-semibold">${fmt(jitter(p.alcance,.01))}</td>
+      <td class="px-4 py-3.5 text-center text-[#A8A8A2]">${p.likes > 0 ? p.likes.toLocaleString() : '—'}</td>
+      <td class="px-4 py-3.5 text-center text-[#A8A8A2]">${p.comentarios > 0 ? p.comentarios : '—'}</td>
+      <td class="px-4 py-3.5 text-center text-[#A8A8A2]">${p.guardados > 0 ? p.guardados : '—'}</td>
+      <td class="px-4 py-3.5 text-center"><span class="${engClass}">${p.eng}%</span></td>
+    </tr>`;
+  }).join('');
+}
 
-      <!-- KPI Cards principales -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+function updateTime() {
+  const now = new Date();
+  const ts = now.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})
+           + ' · ' + now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('header-time').textContent  = now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('footer-time').textContent  = ts;
+  document.getElementById('header-period').textContent= 'Resumen del mes · ' + now.toLocaleDateString('es-MX',{month:'long',year:'numeric'});
+}
 
-        <!-- Inversión Total -->
-        <div class="card p-5 glow-yellow">
-          <div class="text-[#6B6B6B] text-xs font-mono uppercase tracking-wider mb-3">Inversión Total</div>
-          <div class="font-display text-4xl text-[#F5E500] tracking-wide" id="kpi-inversion">$0</div>
-          <div class="flex items-center gap-2 mt-2">
-            <span class="text-[10px] px-2 py-0.5 rounded-full trend-up font-mono">+12.4%</span>
-            <span class="text-[#6B6B6B] text-xs">vs. mes anterior</span>
-          </div>
-          <div class="progress-bar mt-3">
-            <div class="progress-fill bg-[#F5E500]" style="width: 72%"></div>
-          </div>
-          <div class="flex justify-between mt-1">
-            <span class="text-[#6B6B6B] text-[10px] font-mono">72% del presupuesto</span>
-            <span class="text-[#6B6B6B] text-[10px] font-mono">Meta: $28,000</span>
-          </div>
-        </div>
+// ─────────────────────────────────────────────
+//  GRÁFICAS
+// ─────────────────────────────────────────────
+const DIAS = ['8/3','9/3','10/3','11/3','12/3','13/3','14/3','15/3','16/3','17/3','18/3','19/3','20/3','21/3','22/3','23/3','24/3','25/3','26/3','27/3','28/3','29/3','30/3','31/3','1/4','2/4','3/4','4/4','5/4','6/4'];
 
-        <!-- Alcance Total -->
-        <div class="card p-5 glow-blue">
-          <div class="text-[#6B6B6B] text-xs font-mono uppercase tracking-wider mb-3">Alcance Total</div>
-          <div class="font-display text-4xl text-[#38BDF8] tracking-wide" id="kpi-alcance">0</div>
-          <div class="flex items-center gap-2 mt-2">
-            <span class="text-[10px] px-2 py-0.5 rounded-full trend-up font-mono">+8.7%</span>
-            <span class="text-[#6B6B6B] text-xs">personas únicas</span>
-          </div>
-          <div class="progress-bar mt-3">
-            <div class="progress-fill bg-[#38BDF8]" style="width: 58%"></div>
-          </div>
-          <div class="flex justify-between mt-1">
-            <span class="text-[#6B6B6B] text-[10px] font-mono">58% de la meta</span>
-            <span class="text-[#6B6B6B] text-[10px] font-mono">Meta: 500K</span>
-          </div>
-        </div>
+const TOOLTIP = {
+  backgroundColor: '#2A2A26',
+  borderColor: '#3E3E3A',
+  borderWidth: 1,
+  titleColor: '#F5F5F0',
+  bodyColor: '#A8A8A2',
+  titleFont: { family: "'Space Grotesk', sans-serif", size: 12, weight: '600' },
+  bodyFont:  { family: "'Space Grotesk', sans-serif", size: 12 },
+  padding: 12,
+};
+const SCALES = {
+  x: { grid:{color:'#1F1F1D'}, ticks:{color:'#6B6B6B',font:{family:"'Space Grotesk'",size:10}} },
+  y: { grid:{color:'#1F1F1D'}, ticks:{color:'#6B6B6B',font:{family:"'Space Grotesk'",size:10}} },
+};
 
-        <!-- Conversiones -->
-        <div class="card p-5 glow-green">
-          <div class="text-[#6B6B6B] text-xs font-mono uppercase tracking-wider mb-3">Conversiones</div>
-          <div class="font-display text-4xl text-[#22C55E] tracking-wide" id="kpi-conversiones">0</div>
-          <div class="flex items-center gap-2 mt-2">
-            <span class="text-[10px] px-2 py-0.5 rounded-full trend-up font-mono">+23.1%</span>
-            <span class="text-[#6B6B6B] text-xs">leads captados</span>
-          </div>
-          <div class="progress-bar mt-3">
-            <div class="progress-fill bg-[#22C55E]" style="width: 84%"></div>
-          </div>
-          <div class="flex justify-between mt-1">
-            <span class="text-[#6B6B6B] text-[10px] font-mono">84% de la meta</span>
-            <span class="text-[#6B6B6B] text-[10px] font-mono">Meta: 300</span>
-          </div>
-        </div>
-
-        <!-- ROAS Promedio -->
-        <div class="card p-5">
-          <div class="text-[#6B6B6B] text-xs font-mono uppercase tracking-wider mb-3">ROAS Promedio</div>
-          <div class="font-display text-4xl text-white tracking-wide" id="kpi-roas">0x</div>
-          <div class="flex items-center gap-2 mt-2">
-            <span class="text-[10px] px-2 py-0.5 rounded-full trend-up font-mono">+5.2%</span>
-            <span class="text-[#6B6B6B] text-xs">retorno sobre ad spend</span>
-          </div>
-          <div class="progress-bar mt-3">
-            <div class="progress-fill bg-white" style="width: 90%"></div>
-          </div>
-          <div class="flex justify-between mt-1">
-            <span class="text-[#6B6B6B] text-[10px] font-mono">Excelente</span>
-            <span class="text-[#6B6B6B] text-[10px] font-mono">Meta: 3.5x</span>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Gráfica de rendimiento general -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div class="card p-5 lg:col-span-2">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <div class="font-semibold text-white">Tendencia de Resultados</div>
-              <div class="text-[#6B6B6B] text-xs font-mono">Últimos 30 días — todos los canales</div>
-            </div>
-            <div class="flex gap-2 text-xs">
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#F5E500] inline-block"></span><span class="text-[#A8A8A2]">Meta Ads</span></span>
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#38BDF8] inline-block"></span><span class="text-[#A8A8A2]">Email</span></span>
-              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#A78BFA] inline-block"></span><span class="text-[#A8A8A2]">Orgánico</span></span>
-            </div>
-          </div>
-          <div class="chart-container" style="height:200px">
-            <canvas id="chartGeneral"></canvas>
-          </div>
-        </div>
-
-        <!-- Canal breakdown -->
-        <div class="card p-5">
-          <div class="font-semibold text-white mb-1">Distribución por Canal</div>
-          <div class="text-[#6B6B6B] text-xs font-mono mb-4">% de conversiones totales</div>
-          <div class="chart-container" style="height:160px">
-            <canvas id="chartDonut"></canvas>
-          </div>
-          <div class="mt-4 flex flex-col gap-2">
-            <div class="flex items-center justify-between text-sm">
-              <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#F5E500] inline-block"></span><span class="text-[#A8A8A2]">Meta Ads</span></span>
-              <span class="text-white font-mono font-bold" id="pct-meta">62%</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#38BDF8] inline-block"></span><span class="text-[#A8A8A2]">Email</span></span>
-              <span class="text-white font-mono font-bold" id="pct-email">25%</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-[#A78BFA] inline-block"></span><span class="text-[#A8A8A2]">Orgánico</span></span>
-              <span class="text-white font-mono font-bold" id="pct-organico">13%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== SECCIÓN: META ADS ===== -->
-    <section id="meta-ads" class="mb-12">
-      <div class="section-accent mb-6">
-        <div class="flex items-center gap-3">
-          <h2 class="font-display text-2xl text-white tracking-wider">META ADS</h2>
-          <span class="live-tag flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-[#22C55E] pulse-dot inline-block"></span>
-            En vivo
-          </span>
-        </div>
-        <p class="text-[#6B6B6B] text-sm">Facebook + Instagram Ads · Cuenta activa</p>
-      </div>
-
-      <!-- Meta KPIs -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Gasto</div>
-          <div class="font-display text-2xl text-[#F5E500]" id="meta-gasto">$0</div>
-          <div class="text-[10px] text-[#6B6B6B] font-mono mt-1" id="meta-gasto-diario">$0/día</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Impresiones</div>
-          <div class="font-display text-2xl text-white" id="meta-impresiones">0</div>
-          <div class="text-[10px] trend-up px-1.5 py-0.5 rounded font-mono mt-1 inline-block">+14%</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Clics</div>
-          <div class="font-display text-2xl text-white" id="meta-clics">0</div>
-          <div class="text-[10px] text-[#6B6B6B] font-mono mt-1" id="meta-ctr">CTR: 0%</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">CPC</div>
-          <div class="font-display text-2xl text-white" id="meta-cpc">$0</div>
-          <div class="text-[10px] trend-up px-1.5 py-0.5 rounded font-mono mt-1 inline-block">Bajo</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">CPM</div>
-          <div class="font-display text-2xl text-white" id="meta-cpm">$0</div>
-          <div class="text-[10px] text-[#6B6B6B] font-mono mt-1">por mil imp.</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">ROAS</div>
-          <div class="font-display text-2xl text-[#22C55E]" id="meta-roas">0x</div>
-          <div class="text-[10px] trend-up px-1.5 py-0.5 rounded font-mono mt-1 inline-block">+5.2%</div>
-        </div>
-      </div>
-
-      <!-- Gráfica Meta + Tabla campañas -->
-      <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
-
-        <!-- Gráfica de clics por día -->
-        <div class="card p-5 lg:col-span-3">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <div class="font-semibold text-white">Clics e Impresiones por Día</div>
-              <div class="text-[#6B6B6B] text-xs font-mono">Facebook + Instagram combinados</div>
-            </div>
-          </div>
-          <div class="chart-container" style="height:180px">
-            <canvas id="chartMetaClics"></canvas>
-          </div>
-        </div>
-
-        <!-- Desglose por objetivo -->
-        <div class="card p-5 lg:col-span-2">
-          <div class="font-semibold text-white mb-1">Resultados por Objetivo</div>
-          <div class="text-[#6B6B6B] text-xs font-mono mb-4">Conversiones según tipo de campaña</div>
-          <div class="flex flex-col gap-3">
-            <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span class="text-[#A8A8A2]">Tráfico al sitio</span>
-                <span class="text-white font-mono" id="meta-obj-trafico">0</span>
-              </div>
-              <div class="progress-bar"><div class="progress-fill bg-[#F5E500]" id="bar-trafico" style="width:0%"></div></div>
-            </div>
-            <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span class="text-[#A8A8A2]">Generación de leads</span>
-                <span class="text-white font-mono" id="meta-obj-leads">0</span>
-              </div>
-              <div class="progress-bar"><div class="progress-fill bg-[#38BDF8]" id="bar-leads" style="width:0%"></div></div>
-            </div>
-            <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span class="text-[#A8A8A2]">Interacción</span>
-                <span class="text-white font-mono" id="meta-obj-interaccion">0</span>
-              </div>
-              <div class="progress-bar"><div class="progress-fill bg-[#A78BFA]" id="bar-interaccion" style="width:0%"></div></div>
-            </div>
-            <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span class="text-[#A8A8A2]">Ventas / Conversiones</span>
-                <span class="text-white font-mono" id="meta-obj-ventas">0</span>
-              </div>
-              <div class="progress-bar"><div class="progress-fill bg-[#22C55E]" id="bar-ventas" style="width:0%"></div></div>
-            </div>
-            <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span class="text-[#A8A8A2]">Reconocimiento</span>
-                <span class="text-white font-mono" id="meta-obj-brand">0</span>
-              </div>
-              <div class="progress-bar"><div class="progress-fill bg-[#FB923C]" id="bar-brand" style="width:0%"></div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tabla de campañas -->
-      <div class="card mt-4">
-        <div class="p-5 border-b border-[#2A2A26] flex items-center justify-between">
-          <div>
-            <div class="font-semibold text-white">Campañas Activas</div>
-            <div class="text-[#6B6B6B] text-xs font-mono">Detalle por campaña · actualización automática</div>
-          </div>
-          <span class="text-[#6B6B6B] text-xs font-mono" id="meta-num-campanas">0 campañas</span>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-[#2A2A26]">
-                <th class="text-left text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-5 py-3">Campaña</th>
-                <th class="text-left text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Estado</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Gasto</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Impresiones</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Clics</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">CTR</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">CPC</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Resultados</th>
-              </tr>
-            </thead>
-            <tbody id="meta-tabla-campanas">
-              <!-- JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== SECCIÓN: EMAIL MARKETING ===== -->
-    <section id="email" class="mb-12">
-      <div class="section-accent mb-6">
-        <div class="flex items-center gap-3">
-          <h2 class="font-display text-2xl text-white tracking-wider">EMAIL MARKETING</h2>
-        </div>
-        <p class="text-[#6B6B6B] text-sm">Campañas de correo electrónico · Funnels y newsletters</p>
-      </div>
-
-      <!-- Email KPIs -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Enviados</div>
-          <div class="font-display text-2xl text-white" id="email-enviados">0</div>
-          <div class="text-[10px] text-[#6B6B6B] font-mono mt-1">correos totales</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Tasa Apertura</div>
-          <div class="font-display text-2xl text-[#22C55E]" id="email-apertura">0%</div>
-          <div class="text-[10px] trend-up px-1.5 py-0.5 rounded font-mono mt-1 inline-block">Muy buena</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Tasa Clic</div>
-          <div class="font-display text-2xl text-[#38BDF8]" id="email-clic">0%</div>
-          <div class="text-[10px] trend-up px-1.5 py-0.5 rounded font-mono mt-1 inline-block">+2.1%</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Conversiones</div>
-          <div class="font-display text-2xl text-white" id="email-conversiones">0</div>
-          <div class="text-[10px] trend-up px-1.5 py-0.5 rounded font-mono mt-1 inline-block">+18%</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Rebotes</div>
-          <div class="font-display text-2xl text-white" id="email-rebotes">0%</div>
-          <div class="text-[10px] trend-down px-1.5 py-0.5 rounded font-mono mt-1 inline-block">Normal</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Bajas</div>
-          <div class="font-display text-2xl text-white" id="email-bajas">0%</div>
-          <div class="text-[10px] trend-neutral px-1.5 py-0.5 rounded font-mono mt-1 inline-block">Bajo</div>
-        </div>
-      </div>
-
-      <!-- Email gráfica + tabla campañas email -->
-      <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <div class="card p-5 lg:col-span-3">
-          <div class="font-semibold text-white mb-1">Aperturas y Clics por Campaña</div>
-          <div class="text-[#6B6B6B] text-xs font-mono mb-4">Comparativa de rendimiento</div>
-          <div class="chart-container" style="height:200px">
-            <canvas id="chartEmail"></canvas>
-          </div>
-        </div>
-
-        <div class="card p-5 lg:col-span-2">
-          <div class="font-semibold text-white mb-1">Embudo de Email</div>
-          <div class="text-[#6B6B6B] text-xs font-mono mb-4">De enviados a conversiones</div>
-          <div class="flex flex-col gap-2" id="email-funnel">
-            <!-- JS -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Tabla campañas email -->
-      <div class="card mt-4">
-        <div class="p-5 border-b border-[#2A2A26]">
-          <div class="font-semibold text-white">Historial de Campañas de Email</div>
-          <div class="text-[#6B6B6B] text-xs font-mono">Todas las campañas del período</div>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-[#2A2A26]">
-                <th class="text-left text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-5 py-3">Campaña</th>
-                <th class="text-left text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Fecha</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Enviados</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Aperturas</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Clics</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Conv.</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Bajas</th>
-              </tr>
-            </thead>
-            <tbody id="email-tabla">
-              <!-- JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== SECCIÓN: CONTENIDO ORGÁNICO ===== -->
-    <section id="organico" class="mb-12">
-      <div class="section-accent mb-6">
-        <h2 class="font-display text-2xl text-white tracking-wider">CONTENIDO ORGÁNICO</h2>
-        <p class="text-[#6B6B6B] text-sm">Instagram · Facebook · Publicaciones sin inversión</p>
-      </div>
-
-      <!-- Orgánico KPIs -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Alcance</div>
-          <div class="font-display text-2xl text-[#A78BFA]" id="org-alcance">0</div>
-          <div class="text-[10px] trend-up px-1.5 py-0.5 rounded font-mono mt-1 inline-block">+9.3%</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Impresiones</div>
-          <div class="font-display text-2xl text-white" id="org-impresiones">0</div>
-          <div class="text-[10px] text-[#6B6B6B] font-mono mt-1">total período</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Interacción</div>
-          <div class="font-display text-2xl text-white" id="org-interaccion">0%</div>
-          <div class="text-[10px] trend-up px-1.5 py-0.5 rounded font-mono mt-1 inline-block">Alta</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Nuevos Seguidores</div>
-          <div class="font-display text-2xl text-[#22C55E]" id="org-seguidores">0</div>
-          <div class="text-[10px] trend-up px-1.5 py-0.5 rounded font-mono mt-1 inline-block">+31%</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Guardados</div>
-          <div class="font-display text-2xl text-white" id="org-guardados">0</div>
-          <div class="text-[10px] trend-up px-1.5 py-0.5 rounded font-mono mt-1 inline-block">+45%</div>
-        </div>
-        <div class="card p-4">
-          <div class="text-[#6B6B6B] text-[10px] font-mono uppercase tracking-wider mb-2">Compartidos</div>
-          <div class="font-display text-2xl text-white" id="org-compartidos">0</div>
-          <div class="text-[10px] trend-up px-1.5 py-0.5 rounded font-mono mt-1 inline-block">+22%</div>
-        </div>
-      </div>
-
-      <!-- Gráficas orgánico + Top posts -->
-      <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <div class="card p-5 lg:col-span-3">
-          <div class="font-semibold text-white mb-1">Alcance Orgánico por Día</div>
-          <div class="text-[#6B6B6B] text-xs font-mono mb-4">Instagram + Facebook</div>
-          <div class="chart-container" style="height:180px">
-            <canvas id="chartOrganico"></canvas>
-          </div>
-        </div>
-
-        <!-- Top posts -->
-        <div class="card p-5 lg:col-span-2">
-          <div class="font-semibold text-white mb-1">Top Publicaciones</div>
-          <div class="text-[#6B6B6B] text-xs font-mono mb-4">Mejores posts del período</div>
-          <div class="flex flex-col gap-3" id="top-posts">
-            <!-- JS -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Tabla de publicaciones -->
-      <div class="card mt-4">
-        <div class="p-5 border-b border-[#2A2A26]">
-          <div class="font-semibold text-white">Registro de Publicaciones</div>
-          <div class="text-[#6B6B6B] text-xs font-mono">Todas las publicaciones del período</div>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-[#2A2A26]">
-                <th class="text-left text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-5 py-3">Publicación</th>
-                <th class="text-left text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Tipo</th>
-                <th class="text-left text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Plataforma</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Alcance</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Likes</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Comentarios</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Guardados</th>
-                <th class="text-right text-[#6B6B6B] text-xs font-mono uppercase tracking-wider px-4 py-3">Eng. Rate</th>
-              </tr>
-            </thead>
-            <tbody id="organico-tabla">
-              <!-- JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="border-t border-[#2A2A26] pt-6 pb-8 mt-4">
-      <div class="flex items-center justify-between">
-        <div class="text-[#6B6B6B] text-xs font-mono">Dashboard generado por <span class="text-[#F5E500]">TÁCTICA</span> · Datos actualizados en tiempo real</div>
-        <div class="text-[#6B6B6B] text-xs font-mono" id="footer-time">—</div>
-      </div>
-    </footer>
-
-  </main>
-
-  <script>
-  // ============================================================
-  //  DATOS Y LÓGICA DEL DASHBOARD
-  // ============================================================
-
-  // Datos base — aquí puedes conectar tu API real
-  const DATA = {
-    meta: {
-      gasto: 20160,
-      gastoDiario: 672,
-      impresiones: 847320,
-      clics: 22408,
-      ctr: 2.65,
-      cpc: 0.90,
-      cpm: 23.80,
-      roas: 4.1,
-      conversiones: 1847,
-      campanas: [
-        { nombre: "Promo Abril — Captación", estado: "activa", objetivo: "Leads", gasto: 7200, impresiones: 312000, clics: 9360, ctr: 3.00, cpc: 0.77, resultados: 680 },
-        { nombre: "Reconocimiento de Marca Q2", estado: "activa", objetivo: "Alcance", gasto: 4800, impresiones: 284000, clics: 4544, ctr: 1.60, cpc: 1.06, resultados: 284 },
-        { nombre: "Retargeting — Visitas Sitio", estado: "activa", objetivo: "Conversión", gasto: 5100, impresiones: 168320, clics: 6733, ctr: 4.00, cpc: 0.76, resultados: 521 },
-        { nombre: "Tráfico al Blog", estado: "pausada", objetivo: "Tráfico", gasto: 1840, impresiones: 72000, clics: 1584, ctr: 2.20, cpc: 1.16, resultados: 198 },
-        { nombre: "Video Views — Testimoniales", estado: "activa", objetivo: "Video", gasto: 1220, impresiones: 11000, clics: 187, ctr: 1.70, cpc: 6.52, resultados: 164 },
-      ],
-      porObjetivo: { trafico: 1584, leads: 680, interaccion: 348, ventas: 521, brand: 284 }
-    },
-    email: {
-      enviados: 14820,
-      apertura: 28.4,
-      clic: 4.7,
-      conversiones: 312,
-      rebotes: 1.8,
-      bajas: 0.4,
-      campanas: [
-        { nombre: "Newsletter Abril", fecha: "2 Abr", enviados: 5200, aperturas: 38.2, clics: 6.1, conversiones: 128, bajas: 0.3 },
-        { nombre: "Promo Semana Santa", fecha: "28 Mar", enviados: 4800, aperturas: 31.5, clics: 5.8, conversiones: 97, bajas: 0.5 },
-        { nombre: "Secuencia Bienvenida — E1", fecha: "Ongoing", enviados: 1840, aperturas: 62.4, clics: 14.2, conversiones: 63, bajas: 0.1 },
-        { nombre: "Secuencia Bienvenida — E2", fecha: "Ongoing", enviados: 1640, aperturas: 48.7, clics: 9.4, conversiones: 24, bajas: 0.2 },
-        { nombre: "Reactivación Inactivos", fecha: "15 Mar", enviados: 1340, aperturas: 12.1, clics: 1.3, conversiones: 0, bajas: 1.8 },
-      ]
-    },
-    organico: {
-      alcance: 89420,
-      impresiones: 214800,
-      interaccion: 5.8,
-      seguidores: 743,
-      guardados: 1284,
-      compartidos: 628,
-      posts: [
-        { nombre: "Reel: Tips de ahorro #1", tipo: "Reel", plataforma: "Instagram", alcance: 18400, likes: 1240, comentarios: 87, guardados: 342, engRate: 9.1 },
-        { nombre: "Carrusel: Guía completa Q2", tipo: "Carrusel", plataforma: "Instagram", alcance: 12800, likes: 843, comentarios: 54, guardados: 284, engRate: 9.2 },
-        { nombre: "Post: Testimonio cliente", tipo: "Imagen", plataforma: "Facebook", alcance: 9200, likes: 312, comentarios: 28, guardados: 41, engRate: 4.1 },
-        { nombre: "Reel: Behind the scenes", tipo: "Reel", plataforma: "Instagram", alcance: 14200, likes: 982, comentarios: 63, guardados: 198, engRate: 8.8 },
-        { nombre: "Carrusel: Estadísticas del sector", tipo: "Carrusel", plataforma: "Instagram", alcance: 11400, likes: 724, comentarios: 41, guardados: 187, engRate: 8.4 },
-        { nombre: "Historia encuesta: ¿Qué quieres ver?", tipo: "Historia", plataforma: "Instagram", alcance: 7800, likes: 0, comentarios: 0, guardados: 0, engRate: 42.1 },
-        { nombre: "Post: Feliz inicio de semana", tipo: "Imagen", plataforma: "Facebook", alcance: 5420, likes: 187, comentarios: 14, guardados: 8, engRate: 3.9 },
-        { nombre: "Reel: Tutorial paso a paso", tipo: "Reel", plataforma: "Instagram", alcance: 10200, likes: 741, comentarios: 48, guardados: 224, engRate: 9.9 },
-      ]
-    }
-  };
-
-  // Días para gráficas
-  const DIAS = ['8/3','9/3','10/3','11/3','12/3','13/3','14/3','15/3','16/3','17/3','18/3','19/3','20/3','21/3','22/3','23/3','24/3','25/3','26/3','27/3','28/3','29/3','30/3','31/3','1/4','2/4','3/4','4/4','5/4','6/4'];
-
-  function randRange(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-  function jitter(arr, pct=0.05) { return arr.map(v => Math.round(v * (1 + (Math.random()-0.5)*pct*2))); }
-
-  const BASE_META_CLICS = [620,580,710,690,740,820,760,680,720,790,830,700,690,740,810,870,780,720,760,800,850,920,880,840,780,760,820,880,940,860];
-  const BASE_META_IMP   = BASE_META_CLICS.map(v => v * randRange(30, 38));
-  const BASE_EMAIL_AP   = [38,42,36,28,31,44,38,29,27,33,41,39,28,30,36,43,40,31,29,35,42,46,44,38,36,34,40,45,48,42];
-  const BASE_EMAIL_CL   = BASE_EMAIL_AP.map(v => Math.round(v * 0.165));
-  const BASE_ORG        = [2800,3100,2600,2400,3200,4100,3800,2900,2700,3100,3600,3300,2800,2900,3400,4200,3900,3100,2900,3400,4000,4600,4400,3800,3600,3400,4100,4700,5200,4800];
-
-  // Formato de números
-  const fmt = n => n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(1)+'K' : n.toString();
-  const fmtPeso = n => '$' + n.toLocaleString('es-MX', {minimumFractionDigits:0, maximumFractionDigits:0});
-  const fmtPct = n => n.toFixed(1) + '%';
-
-  // Actualizar KPIs
-  function updateKPIs() {
-    const v = (mult=1) => (Math.random() > 0.5 ? 1 : -1) * mult;
-
-    // Resumen
-    document.getElementById('kpi-inversion').textContent = fmtPeso(DATA.meta.gasto + randRange(-200, 200));
-    document.getElementById('kpi-alcance').textContent = fmt(DATA.organico.alcance + DATA.meta.impresiones + randRange(-500, 500));
-    document.getElementById('kpi-conversiones').textContent = fmt(DATA.meta.conversiones + DATA.email.conversiones + randRange(-5, 5));
-    document.getElementById('kpi-roas').textContent = (DATA.meta.roas + (Math.random()-0.5)*0.2).toFixed(1) + 'x';
-
-    // Meta
-    document.getElementById('meta-gasto').textContent = fmtPeso(DATA.meta.gasto);
-    document.getElementById('meta-gasto-diario').textContent = fmtPeso(DATA.meta.gastoDiario) + '/día';
-    document.getElementById('meta-impresiones').textContent = fmt(DATA.meta.impresiones + randRange(-300, 300));
-    document.getElementById('meta-clics').textContent = fmt(DATA.meta.clics + randRange(-20, 20));
-    document.getElementById('meta-ctr').textContent = 'CTR: ' + fmtPct(DATA.meta.ctr + (Math.random()-0.5)*0.1);
-    document.getElementById('meta-cpc').textContent = '$' + (DATA.meta.cpc + (Math.random()-0.5)*0.05).toFixed(2);
-    document.getElementById('meta-cpm').textContent = '$' + (DATA.meta.cpm + (Math.random()-0.5)*0.5).toFixed(2);
-    document.getElementById('meta-roas').textContent = (DATA.meta.roas + (Math.random()-0.5)*0.2).toFixed(1) + 'x';
-    document.getElementById('meta-num-campanas').textContent = DATA.meta.campanas.length + ' campañas';
-
-    // Objetivos Meta
-    const t = DATA.meta.porObjetivo.trafico + randRange(-10,10);
-    const l = DATA.meta.porObjetivo.leads + randRange(-5,5);
-    const i = DATA.meta.porObjetivo.interaccion + randRange(-5,5);
-    const vc = DATA.meta.porObjetivo.ventas + randRange(-5,5);
-    const b = DATA.meta.porObjetivo.brand + randRange(-3,3);
-    const maxObj = Math.max(t,l,i,vc,b);
-    document.getElementById('meta-obj-trafico').textContent = fmt(t);
-    document.getElementById('meta-obj-leads').textContent = fmt(l);
-    document.getElementById('meta-obj-interaccion').textContent = fmt(i);
-    document.getElementById('meta-obj-ventas').textContent = fmt(vc);
-    document.getElementById('meta-obj-brand').textContent = fmt(b);
-    document.getElementById('bar-trafico').style.width = Math.round(t/maxObj*100)+'%';
-    document.getElementById('bar-leads').style.width = Math.round(l/maxObj*100)+'%';
-    document.getElementById('bar-interaccion').style.width = Math.round(i/maxObj*100)+'%';
-    document.getElementById('bar-ventas').style.width = Math.round(vc/maxObj*100)+'%';
-    document.getElementById('bar-brand').style.width = Math.round(b/maxObj*100)+'%';
-
-    // Email
-    document.getElementById('email-enviados').textContent = fmt(DATA.email.enviados);
-    document.getElementById('email-apertura').textContent = fmtPct(DATA.email.apertura + (Math.random()-0.5)*0.3);
-    document.getElementById('email-clic').textContent = fmtPct(DATA.email.clic + (Math.random()-0.5)*0.1);
-    document.getElementById('email-conversiones').textContent = fmt(DATA.email.conversiones + randRange(-2, 2));
-    document.getElementById('email-rebotes').textContent = fmtPct(DATA.email.rebotes);
-    document.getElementById('email-bajas').textContent = fmtPct(DATA.email.bajas);
-
-    // Orgánico
-    document.getElementById('org-alcance').textContent = fmt(DATA.organico.alcance + randRange(-200, 200));
-    document.getElementById('org-impresiones').textContent = fmt(DATA.organico.impresiones + randRange(-300, 300));
-    document.getElementById('org-interaccion').textContent = fmtPct(DATA.organico.interaccion + (Math.random()-0.5)*0.2);
-    document.getElementById('org-seguidores').textContent = fmt(DATA.organico.seguidores + randRange(-2, 2));
-    document.getElementById('org-guardados').textContent = fmt(DATA.organico.guardados + randRange(-5, 5));
-    document.getElementById('org-compartidos').textContent = fmt(DATA.organico.compartidos + randRange(-3, 3));
-
-    // Timestamp
-    const now = new Date();
-    const ts = now.toLocaleDateString('es-MX',{day:'2-digit',month:'short'}) + ' · ' + now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    document.getElementById('lastUpdated').textContent = 'Últ. actualización: ' + ts;
-    document.getElementById('footer-time').textContent = ts;
+// Ventas por campaña
+new Chart(document.getElementById('chartVentasCampana'), {
+  type: 'bar',
+  data: {
+    labels: D.paid.campanas.map(c => c.nombre.length > 28 ? c.nombre.substring(0,28)+'…' : c.nombre),
+    datasets: [{
+      label: 'Ventas',
+      data: D.paid.campanas.map(c => c.ventas),
+      backgroundColor: D.paid.campanas.map(c => c.estado==='activa' ? 'rgba(34,197,94,.8)' : 'rgba(168,168,162,.4)'),
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{display:false}, tooltip:{...TOOLTIP} },
+    scales: SCALES
   }
+});
 
-  // Tabla de campañas Meta
-  function renderMetaTabla() {
-    const tbody = document.getElementById('meta-tabla-campanas');
-    tbody.innerHTML = DATA.meta.campanas.map(c => {
-      const estadoClass = c.estado === 'activa' ? 'status-active' : c.estado === 'pausada' ? 'status-paused' : 'status-ended';
-      const estadoLabel = c.estado === 'activa' ? 'Activa' : c.estado === 'pausada' ? 'Pausada' : 'Finalizada';
-      return `<tr class="border-b border-[#2A2A26] transition-colors">
-        <td class="px-5 py-3.5">
-          <div class="text-white font-medium">${c.nombre}</div>
-          <div class="text-[#6B6B6B] text-xs font-mono">${c.objetivo}</div>
-        </td>
-        <td class="px-4 py-3.5"><span class="text-xs px-2.5 py-1 rounded-full ${estadoClass} font-mono">${estadoLabel}</span></td>
-        <td class="px-4 py-3.5 text-right text-white font-mono font-semibold">${fmtPeso(c.gasto)}</td>
-        <td class="px-4 py-3.5 text-right text-[#A8A8A2] font-mono">${fmt(c.impresiones)}</td>
-        <td class="px-4 py-3.5 text-right text-[#A8A8A2] font-mono">${fmt(c.clics)}</td>
-        <td class="px-4 py-3.5 text-right font-mono"><span class="text-[#22C55E]">${c.ctr}%</span></td>
-        <td class="px-4 py-3.5 text-right text-[#A8A8A2] font-mono">$${c.cpc}</td>
-        <td class="px-4 py-3.5 text-right"><span class="text-[#F5E500] font-mono font-bold">${fmt(c.resultados)}</span></td>
-      </tr>`;
-    }).join('');
+// Alcance orgánico diario
+const BASE_ORG = [2800,3100,2600,2400,3200,4100,3800,2900,2700,3100,3600,3300,2800,2900,3400,4200,3900,3100,2900,3400,4000,4600,4400,3800,3600,3400,4100,4700,5200,4800];
+new Chart(document.getElementById('chartOrgAlcance'), {
+  type: 'line',
+  data: {
+    labels: DIAS,
+    datasets: [{
+      label: 'Personas alcanzadas',
+      data: BASE_ORG,
+      borderColor: '#A78BFA',
+      backgroundColor: 'rgba(167,139,250,.1)',
+      borderWidth: 2,
+      fill: true,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{display:false}, tooltip:{...TOOLTIP} },
+    scales: SCALES
   }
+});
 
-  // Tabla email
-  function renderEmailTabla() {
-    const tbody = document.getElementById('email-tabla');
-    tbody.innerHTML = DATA.email.campanas.map(c => {
-      const apClass = c.aperturas > 35 ? 'text-[#22C55E]' : c.aperturas > 25 ? 'text-[#F5E500]' : 'text-[#FF2B2B]';
-      return `<tr class="border-b border-[#2A2A26] transition-colors">
-        <td class="px-5 py-3.5">
-          <div class="text-white font-medium">${c.nombre}</div>
-        </td>
-        <td class="px-4 py-3.5 text-[#6B6B6B] font-mono text-xs">${c.fecha}</td>
-        <td class="px-4 py-3.5 text-right text-[#A8A8A2] font-mono">${fmt(c.enviados)}</td>
-        <td class="px-4 py-3.5 text-right font-mono ${apClass}">${c.aperturas}%</td>
-        <td class="px-4 py-3.5 text-right text-[#38BDF8] font-mono">${c.clics}%</td>
-        <td class="px-4 py-3.5 text-right"><span class="text-[#F5E500] font-mono font-bold">${c.conversiones}</span></td>
-        <td class="px-4 py-3.5 text-right text-[#6B6B6B] font-mono">${c.bajas}%</td>
-      </tr>`;
-    }).join('');
-  }
+// ─────────────────────────────────────────────
+//  INIT Y CICLO VIVO
+// ─────────────────────────────────────────────
+function fullRender() {
+  renderHero();
+  renderPaid();
+  renderEmail();
+  renderOrganico();
+  updateTime();
+}
 
-  // Email funnel
-  function renderEmailFunnel() {
-    const total = DATA.email.enviados;
-    const abiertos = Math.round(total * DATA.email.apertura / 100);
-    const clicks = Math.round(total * DATA.email.clic / 100);
-    const conv = DATA.email.conversiones;
-    const steps = [
-      { label: 'Enviados', value: total, color: '#3E3E3A', pct: 100 },
-      { label: 'Abiertos', value: abiertos, color: '#38BDF8', pct: DATA.email.apertura },
-      { label: 'Clics', value: clicks, color: '#A78BFA', pct: DATA.email.clic },
-      { label: 'Conversiones', value: conv, color: '#22C55E', pct: (conv/total*100).toFixed(1) },
-    ];
-    document.getElementById('email-funnel').innerHTML = steps.map(s => `
-      <div>
-        <div class="flex justify-between text-sm mb-1">
-          <span class="text-[#A8A8A2]">${s.label}</span>
-          <span class="text-white font-mono">${fmt(s.value)} <span class="text-[#6B6B6B] text-xs">(${s.pct}%)</span></span>
-        </div>
-        <div class="progress-bar"><div class="progress-fill" style="background:${s.color};width:${s.pct}%"></div></div>
-      </div>
-    `).join('');
-  }
+fullRender();
+setInterval(fullRender, 10000); // actualiza todo cada 10 segundos
 
-  // Tabla orgánico
-  function renderOrganicoTabla() {
-    const tbody = document.getElementById('organico-tabla');
-    tbody.innerHTML = DATA.organico.posts.map(p => {
-      const tipoColors = { Reel: 'text-[#A78BFA]', Carrusel: 'text-[#38BDF8]', Imagen: 'text-[#F5E500]', Historia: 'text-[#FB923C]' };
-      const engClass = p.engRate > 8 ? 'text-[#22C55E]' : p.engRate > 5 ? 'text-[#F5E500]' : 'text-[#A8A8A2]';
-      return `<tr class="border-b border-[#2A2A26] transition-colors">
-        <td class="px-5 py-3.5 text-white font-medium max-w-[200px] truncate">${p.nombre}</td>
-        <td class="px-4 py-3.5"><span class="${tipoColors[p.tipo] || 'text-white'} font-mono text-xs">${p.tipo}</span></td>
-        <td class="px-4 py-3.5 text-[#6B6B6B] font-mono text-xs">${p.plataforma}</td>
-        <td class="px-4 py-3.5 text-right text-[#A78BFA] font-mono">${fmt(p.alcance)}</td>
-        <td class="px-4 py-3.5 text-right text-[#A8A8A2] font-mono">${p.likes > 0 ? fmt(p.likes) : '—'}</td>
-        <td class="px-4 py-3.5 text-right text-[#A8A8A2] font-mono">${p.comentarios > 0 ? p.comentarios : '—'}</td>
-        <td class="px-4 py-3.5 text-right text-[#A8A8A2] font-mono">${p.guardados > 0 ? p.guardados : '—'}</td>
-        <td class="px-4 py-3.5 text-right font-mono ${engClass}">${p.engRate}%</td>
-      </tr>`;
-    }).join('');
-  }
-
-  // Top posts orgánico
-  function renderTopPosts() {
-    const sorted = [...DATA.organico.posts].sort((a,b) => b.alcance - a.alcance).slice(0,4);
-    document.getElementById('top-posts').innerHTML = sorted.map((p,i) => `
-      <div class="flex items-center gap-3">
-        <div class="w-6 h-6 rounded-full bg-[#2A2A26] flex items-center justify-center text-[#6B6B6B] text-xs font-mono flex-shrink-0">${i+1}</div>
-        <div class="flex-1 min-w-0">
-          <div class="text-white text-sm truncate">${p.nombre}</div>
-          <div class="text-[#6B6B6B] text-xs font-mono">${p.tipo} · ${p.plataforma}</div>
-        </div>
-        <div class="text-right flex-shrink-0">
-          <div class="text-[#A78BFA] font-mono text-sm font-bold">${fmt(p.alcance)}</div>
-          <div class="text-[#22C55E] text-xs font-mono">${p.engRate}% eng.</div>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  // ============================================================
-  //  GRÁFICAS
-  // ============================================================
-  const CHART_DEFAULTS = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false }, tooltip: {
-      backgroundColor: '#2A2A26',
-      borderColor: '#3E3E3A',
-      borderWidth: 1,
-      titleColor: '#F5F5F0',
-      bodyColor: '#A8A8A2',
-      titleFont: { family: "'Space Mono', monospace", size: 11 },
-      bodyFont: { family: "'Space Grotesk', sans-serif", size: 12 },
-      padding: 10,
-    }},
-    scales: {
-      x: { grid: { color: '#2A2A26' }, ticks: { color: '#6B6B6B', font: { family: "'Space Mono', monospace", size: 10 } } },
-      y: { grid: { color: '#2A2A26' }, ticks: { color: '#6B6B6B', font: { family: "'Space Mono', monospace", size: 10 } } },
-    }
-  };
-
-  // Gráfica general (líneas)
-  const ctxGeneral = document.getElementById('chartGeneral').getContext('2d');
-  const chartGeneral = new Chart(ctxGeneral, {
-    type: 'line',
-    data: {
-      labels: DIAS,
-      datasets: [
-        {
-          label: 'Meta Ads',
-          data: BASE_META_CLICS,
-          borderColor: '#F5E500',
-          backgroundColor: 'rgba(245,229,0,0.06)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0,
-        },
-        {
-          label: 'Email',
-          data: BASE_EMAIL_AP.map(v => v * 8),
-          borderColor: '#38BDF8',
-          backgroundColor: 'rgba(56,189,248,0.06)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0,
-        },
-        {
-          label: 'Orgánico',
-          data: BASE_ORG.map(v => Math.round(v/30)),
-          borderColor: '#A78BFA',
-          backgroundColor: 'rgba(167,139,250,0.06)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0,
-        }
-      ]
-    },
-    options: { ...CHART_DEFAULTS }
-  });
-
-  // Gráfica donut
-  const ctxDonut = document.getElementById('chartDonut').getContext('2d');
-  const chartDonut = new Chart(ctxDonut, {
-    type: 'doughnut',
-    data: {
-      labels: ['Meta Ads', 'Email', 'Orgánico'],
-      datasets: [{
-        data: [62, 25, 13],
-        backgroundColor: ['#F5E500','#38BDF8','#A78BFA'],
-        borderColor: '#1A1A18',
-        borderWidth: 3,
-        hoverOffset: 6,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '72%',
-      plugins: {
-        legend: { display: false },
-        tooltip: CHART_DEFAULTS.plugins.tooltip,
-      }
-    }
-  });
-
-  // Gráfica Meta clics
-  const ctxMetaClics = document.getElementById('chartMetaClics').getContext('2d');
-  const chartMetaClics = new Chart(ctxMetaClics, {
-    type: 'bar',
-    data: {
-      labels: DIAS,
-      datasets: [
-        {
-          label: 'Clics',
-          data: BASE_META_CLICS,
-          backgroundColor: 'rgba(245,229,0,0.7)',
-          borderRadius: 3,
-          yAxisID: 'y',
-        },
-        {
-          label: 'Impresiones',
-          data: BASE_META_IMP.map(v=>Math.round(v/100)),
-          backgroundColor: 'rgba(56,189,248,0.3)',
-          borderRadius: 3,
-          yAxisID: 'y',
-          type: 'line',
-          borderColor: '#38BDF8',
-          borderWidth: 1.5,
-          fill: false,
-          tension: 0.4,
-          pointRadius: 0,
-        }
-      ]
-    },
-    options: { ...CHART_DEFAULTS }
-  });
-
-  // Gráfica Email
-  const ctxEmail = document.getElementById('chartEmail').getContext('2d');
-  const chartEmail = new Chart(ctxEmail, {
-    type: 'bar',
-    data: {
-      labels: DATA.email.campanas.map(c => c.nombre.length > 20 ? c.nombre.substring(0,20)+'...' : c.nombre),
-      datasets: [
-        {
-          label: 'Tasa Apertura %',
-          data: DATA.email.campanas.map(c => c.aperturas),
-          backgroundColor: 'rgba(56,189,248,0.7)',
-          borderRadius: 4,
-        },
-        {
-          label: 'Tasa Clic %',
-          data: DATA.email.campanas.map(c => c.clics),
-          backgroundColor: 'rgba(167,139,250,0.7)',
-          borderRadius: 4,
-        }
-      ]
-    },
-    options: { ...CHART_DEFAULTS }
-  });
-
-  // Gráfica Orgánico
-  const ctxOrganico = document.getElementById('chartOrganico').getContext('2d');
-  const chartOrganico = new Chart(ctxOrganico, {
-    type: 'line',
-    data: {
-      labels: DIAS,
-      datasets: [{
-        label: 'Alcance Orgánico',
-        data: BASE_ORG,
-        borderColor: '#A78BFA',
-        backgroundColor: 'rgba(167,139,250,0.1)',
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-      }]
-    },
-    options: { ...CHART_DEFAULTS }
-  });
-
-  // Actualización en tiempo real de gráficas
-  function updateCharts() {
-    // General — pequeña variación
-    chartGeneral.data.datasets[0].data = jitter(BASE_META_CLICS, 0.04);
-    chartGeneral.data.datasets[1].data = jitter(BASE_EMAIL_AP.map(v=>v*8), 0.04);
-    chartGeneral.data.datasets[2].data = jitter(BASE_ORG.map(v=>Math.round(v/30)), 0.04);
-    chartGeneral.update('none');
-
-    // Meta clics
-    chartMetaClics.data.datasets[0].data = jitter(BASE_META_CLICS, 0.03);
-    chartMetaClics.update('none');
-
-    // Orgánico
-    chartOrganico.data.datasets[0].data = jitter(BASE_ORG, 0.03);
-    chartOrganico.update('none');
-  }
-
-  // ============================================================
-  //  INIT Y CICLO DE ACTUALIZACIÓN
-  // ============================================================
-  function init() {
-    updateKPIs();
-    renderMetaTabla();
-    renderEmailTabla();
-    renderEmailFunnel();
-    renderOrganicoTabla();
-    renderTopPosts();
-  }
-
-  init();
-
-  // Actualiza KPIs cada 8 segundos
-  setInterval(updateKPIs, 8000);
-
-  // Actualiza gráficas cada 15 segundos
-  setInterval(updateCharts, 15000);
-
-  // Selector de período
-  document.getElementById('periodoSelect').addEventListener('change', function() {
-    // Aquí conectarías el filtro a tu API real
-    updateKPIs();
-    updateCharts();
-  });
-
-  </script>
+</script>
 </body>
 </html>

@@ -6,17 +6,17 @@
   <title>Tus Resultados — Playbooks</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0D0D0B; color: #F5F5F0; font-family: 'Space Grotesk', sans-serif; overflow-x: hidden; }
+    body { background: #0D1117; color: #F0EDE4; font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
     .font-display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.04em; }
 
     /* Animaciones */
     @keyframes pulse-dot   { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
     @keyframes fadeUp      { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
     @keyframes shine       { 0%{background-position:-200% center} 100%{background-position:200% center} }
-    @keyframes glow-pulse  { 0%,100%{box-shadow:0 0 20px rgba(34,197,94,.15)} 50%{box-shadow:0 0 40px rgba(34,197,94,.3)} }
+    @keyframes glow-pulse  { 0%,100%{box-shadow:0 0 24px rgba(202,255,0,.1)} 50%{box-shadow:0 0 48px rgba(202,255,0,.22)} }
     @keyframes count-in { from{opacity:0;transform:scale(.85)} to{opacity:1;transform:scale(1)} }
     @keyframes slide-right { from{width:0} to{width:var(--w)} }
 
@@ -33,7 +33,7 @@
       animation: shine 3s linear infinite;
     }
     .shine-gold {
-      background: linear-gradient(90deg,#F5E500 0%,#fff 40%,#F5E500 60%,#F5E500 100%);
+      background: linear-gradient(90deg,#CAFF00 0%,#fff 40%,#CAFF00 60%,#CAFF00 100%);
       background-size: 200% auto;
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -41,35 +41,35 @@
     }
 
     /* Cards */
-    .card    { background:#1A1A18; border:1px solid #2A2A26; border-radius:16px; }
-    .card-hi { background:#1A1A18; border:1px solid #3E3E3A; border-radius:16px; }
+    .card    { background:#161B22; border:1px solid #21262D; border-radius:16px; }
+    .card-hi { background:#161B22; border:1px solid #30363D; border-radius:16px; }
     .card-win {
-      background: linear-gradient(135deg,#0D1F0D,#1A1A18);
-      border: 1px solid rgba(34,197,94,.3);
+      background: linear-gradient(135deg,#0D1A0A,#161B22);
+      border: 1px solid rgba(202,255,0,.2);
       border-radius: 16px;
     }
     .card-revenue {
-      background: linear-gradient(135deg,#0D1808,#111F0D,#1A1A18);
-      border: 1px solid rgba(34,197,94,.4);
+      background: linear-gradient(135deg,#0D1A0A,#111D09,#161B22);
+      border: 1px solid rgba(202,255,0,.3);
       border-radius:16px;
     }
 
     /* Tags */
     .tag-green  { background:rgba(34,197,94,.12);  color:#22C55E; border:1px solid rgba(34,197,94,.25);  }
-    .tag-yellow { background:rgba(245,229,0,.12);  color:#F5E500; border:1px solid rgba(245,229,0,.25);  }
+    .tag-yellow { background:rgba(245,229,0,.12);  color:#CAFF00; border:1px solid rgba(245,229,0,.25);  }
     .tag-blue   { background:rgba(56,189,248,.12); color:#38BDF8; border:1px solid rgba(56,189,248,.25); }
     .tag-purple { background:rgba(167,139,250,.12);color:#A78BFA; border:1px solid rgba(167,139,250,.25);}
     .tag-red    { background:rgba(255,43,43,.12);  color:#FF6B6B; border:1px solid rgba(255,43,43,.2);   }
     .tag-fire   { background:rgba(251,146,60,.12); color:#FB923C; border:1px solid rgba(251,146,60,.25); }
 
     /* Progress */
-    .progress { height:8px; background:#2A2A26; border-radius:4px; overflow:hidden; }
+    .progress { height:8px; background:#21262D; border-radius:4px; overflow:hidden; }
     .progress-fill { height:100%; border-radius:4px; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
 
     /* Scrollbar */
     ::-webkit-scrollbar { width:5px; }
-    ::-webkit-scrollbar-track { background:#1A1A18; }
-    ::-webkit-scrollbar-thumb { background:#3E3E3A; border-radius:3px; }
+    ::-webkit-scrollbar-track { background:#161B22; }
+    ::-webkit-scrollbar-thumb { background:#30363D; border-radius:3px; }
 
     .section-pill {
       display:inline-flex; align-items:center; gap:8px;
@@ -82,48 +82,48 @@
     .period-pill {
       padding: 5px 13px; border-radius: 100px; cursor: pointer;
       font-size: 12px; font-weight: 600; transition: all .18s;
-      border: 1px solid #2A2A26; color: #A8A8A2; background: #1A1A18;
+      border: 1px solid #21262D; color: #8B949E; background: #161B22;
       white-space: nowrap;
     }
-    .period-pill:hover  { border-color:#3E3E3A; color:#F5F5F0; }
-    .period-pill.active { background:#F5E500; color:#0D0D0B; border-color:#F5E500; }
-    .period-pill.custom-active { background:#2A2A26; color:#F5F5F0; border-color:#F5E500; }
+    .period-pill:hover  { border-color:#30363D; color:#F0EDE4; }
+    .period-pill.active { background:#CAFF00; color:#0D1117; border-color:#CAFF00; font-weight:700; }
+    .period-pill.custom-active { background:#21262D; color:#F0EDE4; border-color:#CAFF00; }
 
     /* Custom date panel */
     .custom-panel {
-      background:#1A1A18; border:1px solid #3E3E3A; border-radius:12px;
+      background:#161B22; border:1px solid #30363D; border-radius:12px;
       padding:12px 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
       margin-top:6px;
     }
     .date-input {
-      background:#0D0D0B; border:1px solid #3E3E3A; border-radius:8px;
-      color:#F5F5F0; font-family:'Space Grotesk',sans-serif; font-size:13px;
+      background:#0D1117; border:1px solid #30363D; border-radius:8px;
+      color:#F0EDE4; font-family:'Space Grotesk',sans-serif; font-size:13px;
       padding:6px 10px; outline:none; cursor:pointer;
     }
-    .date-input:focus { border-color:#F5E500; }
+    .date-input:focus { border-color:#CAFF00; }
     .date-input::-webkit-calendar-picker-indicator { filter:invert(.6); cursor:pointer; }
     .btn-apply {
-      background:#F5E500; color:#0D0D0B; font-weight:700; font-size:12px;
+      background:#CAFF00; color:#0D1117; font-weight:800; font-size:12px;
       border:none; border-radius:8px; padding:7px 14px; cursor:pointer;
       transition:opacity .15s;
     }
     .btn-apply:hover { opacity:.85; }
     .period-label-badge {
-      background:#2A2A26; border:1px solid #3E3E3A; border-radius:8px;
-      color:#A8A8A2; font-size:11px; padding:4px 10px; white-space:nowrap;
+      background:#21262D; border:1px solid #30363D; border-radius:8px;
+      color:#8B949E; font-size:11px; padding:4px 10px; white-space:nowrap;
     }
 
     /* ROI highlight */
     .roi-box {
-      background: linear-gradient(135deg, rgba(245,229,0,.08), rgba(245,229,0,.02));
-      border: 1px solid rgba(245,229,0,.2);
+      background: linear-gradient(135deg, rgba(202,255,0,.07), rgba(202,255,0,.02));
+      border: 1px solid rgba(202,255,0,.18);
       border-radius: 12px;
     }
 
     /* Best badge */
     .best-badge {
-      background: linear-gradient(90deg,#F5E500,#FFF176);
-      color: #0D0D0B;
+      background: linear-gradient(90deg,#CAFF00,#FFF176);
+      color: #0D1117;
       font-size: 10px; font-weight: 700;
       padding: 2px 8px; border-radius: 100px;
       letter-spacing: .04em; text-transform: uppercase;
@@ -135,29 +135,31 @@
 <!-- ══════════════════════════════════════
      HEADER
 ══════════════════════════════════════ -->
-<header class="sticky top-0 z-50 border-b border-[#2A2A26]" style="background:rgba(13,13,11,.96);backdrop-filter:blur(20px)">
+<header class="sticky top-0 z-50 border-b border-[#21262D]" style="background:rgba(13,13,11,.96);backdrop-filter:blur(20px)">
   <div class="max-w-5xl mx-auto px-6 py-3">
     <!-- Fila 1: título + estado -->
     <div class="flex items-center justify-between mb-2">
-      <div>
-        <div class="font-display text-xl tracking-wider text-white">TUS RESULTADOS <span class="text-[#F5E500]">DE CAMPAÑAS</span></div>
+      <div class="flex items-center gap-3">
+        <div class="font-display text-2xl tracking-widest text-[#F0EDE4]">PLAY<span class="text-[#CAFF00]">BOOKS</span></div>
+        <div class="w-px h-5 bg-[#30363D]"></div>
+        <div class="text-[#8B949E] text-xs font-semibold tracking-wider uppercase">Dashboard de campañas</div>
       </div>
-      <div class="flex items-center gap-2 bg-[#1A1A18] border border-[#2A2A26] rounded-full px-3 py-1.5">
+      <div class="flex items-center gap-2 bg-[#161B22] border border-[#21262D] rounded-full px-3 py-1.5">
         <span class="w-2 h-2 rounded-full bg-[#22C55E] pulse-dot"></span>
         <span class="text-[#22C55E] text-xs font-semibold">En vivo</span>
-        <span class="text-[#6B6B6B] text-xs" id="header-time">—</span>
+        <span class="text-[#8B949E] text-xs" id="header-time">—</span>
       </div>
     </div>
     <!-- Fila 2: selector de períodos -->
     <div class="flex items-center gap-1.5 flex-wrap" id="period-pills"></div>
     <!-- Panel personalizado (oculto por defecto) -->
     <div class="custom-panel" id="custom-panel" style="display:none">
-      <span class="text-[#6B6B6B] text-xs font-semibold">Desde</span>
+      <span class="text-[#8B949E] text-xs font-semibold">Desde</span>
       <input type="date" class="date-input" id="date-from" />
-      <span class="text-[#6B6B6B] text-xs font-semibold">Hasta</span>
+      <span class="text-[#8B949E] text-xs font-semibold">Hasta</span>
       <input type="date" class="date-input" id="date-to" />
       <button class="btn-apply" onclick="applyCustomRange()">Aplicar</button>
-      <span class="text-[#6B6B6B] text-xs" id="custom-range-label"></span>
+      <span class="text-[#8B949E] text-xs" id="custom-range-label"></span>
     </div>
   </div>
 </header>
@@ -175,12 +177,12 @@
       <div class="text-5xl">🏆</div>
       <div class="flex-1">
         <div class="font-display text-3xl text-[#22C55E] tracking-wider">¡MES RÉCORD! TUS CAMPAÑAS ESTÁN EN SU MEJOR MOMENTO</div>
-        <div class="text-[#A8A8A2] text-sm mt-1">Cada peso que invertiste está trabajando para ti. Aquí está la prueba 👇</div>
+        <div class="text-[#8B949E] text-sm mt-1">Cada peso que invertiste está trabajando para ti. Aquí está la prueba 👇</div>
       </div>
       <div class="text-right flex-shrink-0">
-        <div class="text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider mb-1">Ingresaste</div>
+        <div class="text-[#8B949E] text-xs font-semibold uppercase tracking-wider mb-1">Ingresaste</div>
         <div class="font-display text-4xl shine-gold" id="hero-revenue">—</div>
-        <div class="text-[#6B6B6B] text-xs mt-0.5">en ingresos este mes</div>
+        <div class="text-[#8B949E] text-xs mt-0.5">en ingresos este mes</div>
       </div>
     </div>
   </div>
@@ -189,8 +191,8 @@
   <div class="roi-box p-5 mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
     <div class="text-3xl">💰</div>
     <div>
-      <div class="text-[#F5E500] font-bold text-lg">Por cada $1 que invertiste, generaste <span class="font-display text-3xl" id="hero-roi">—</span></div>
-      <div class="text-[#6B6B6B] text-sm mt-0.5">Eso es rentabilidad real. Tu dinero no descansa.</div>
+      <div class="text-[#CAFF00] font-bold text-lg">Por cada $1 que invertiste, generaste <span class="font-display text-3xl" id="hero-roi">—</span></div>
+      <div class="text-[#8B949E] text-sm mt-0.5">Eso es rentabilidad real. Tu dinero no descansa.</div>
     </div>
   </div>
 
@@ -201,7 +203,7 @@
     <div class="card-win p-5 relative overflow-hidden">
       <div class="text-[#22C55E] text-xs font-semibold mb-2 uppercase tracking-wider">Ventas cerradas</div>
       <div class="font-display text-5xl shine-text" id="hero-ventas">—</div>
-      <div class="text-[#6B6B6B] text-xs mt-2">clientes nuevos</div>
+      <div class="text-[#8B949E] text-xs mt-2">clientes nuevos</div>
       <div class="mt-3"><span class="tag-green text-xs px-2.5 py-1 rounded-full font-bold">+23% ↑</span></div>
     </div>
 
@@ -209,20 +211,20 @@
     <div class="card p-5">
       <div class="text-[#22C55E] text-xs font-semibold mb-2 uppercase tracking-wider">Ingresos</div>
       <div class="font-display text-4xl text-[#22C55E]" id="hero-revenue2">—</div>
-      <div class="text-[#6B6B6B] text-xs mt-2">generados en total</div>
+      <div class="text-[#8B949E] text-xs mt-2">generados en total</div>
       <div class="mt-3"><span class="tag-green text-xs px-2.5 py-1 rounded-full font-bold">+31% ↑</span></div>
     </div>
 
     <!-- Inversión -->
     <div class="card p-5">
-      <div class="text-[#F5E500] text-xs font-semibold mb-2 uppercase tracking-wider">Invertido</div>
-      <div class="font-display text-4xl text-[#F5E500]" id="hero-gasto">—</div>
-      <div class="text-[#6B6B6B] text-xs mt-2">en publicidad</div>
+      <div class="text-[#CAFF00] text-xs font-semibold mb-2 uppercase tracking-wider">Invertido</div>
+      <div class="font-display text-4xl text-[#CAFF00]" id="hero-gasto">—</div>
+      <div class="text-[#8B949E] text-xs mt-2">en publicidad</div>
       <div class="mt-3">
         <div class="flex justify-between text-[10px] mb-1">
-          <span class="text-[#6B6B6B]">72% del presupuesto</span>
+          <span class="text-[#8B949E]">72% del presupuesto</span>
         </div>
-        <div class="progress" style="height:4px"><div class="progress-fill bg-[#F5E500]" style="width:72%"></div></div>
+        <div class="progress" style="height:4px"><div class="progress-fill bg-[#CAFF00]" style="width:72%"></div></div>
       </div>
     </div>
 
@@ -230,7 +232,7 @@
     <div class="card p-5">
       <div class="text-[#38BDF8] text-xs font-semibold mb-2 uppercase tracking-wider">Costo por venta</div>
       <div class="font-display text-4xl text-white" id="hero-cpv">—</div>
-      <div class="text-[#6B6B6B] text-xs mt-2">por cliente ganado</div>
+      <div class="text-[#8B949E] text-xs mt-2">por cliente ganado</div>
       <div class="mt-3"><span class="tag-green text-xs px-2.5 py-1 rounded-full font-bold">Excelente 🎯</span></div>
     </div>
 
@@ -238,7 +240,7 @@
     <div class="card p-5">
       <div class="text-[#A78BFA] text-xs font-semibold mb-2 uppercase tracking-wider">Personas alcanzadas</div>
       <div class="font-display text-4xl text-[#A78BFA]" id="hero-alcance">—</div>
-      <div class="text-[#6B6B6B] text-xs mt-2">vieron tu marca</div>
+      <div class="text-[#8B949E] text-xs mt-2">vieron tu marca</div>
       <div class="mt-3"><span class="tag-purple text-xs px-2.5 py-1 rounded-full font-bold">+8.7% ↑</span></div>
     </div>
 
@@ -253,52 +255,52 @@
 
   <div class="flex items-center gap-3 mb-5">
     <div class="section-pill tag-yellow">📣 Campañas pagadas</div>
-    <div class="text-[#6B6B6B] text-sm">Facebook + Instagram Ads</div>
+    <div class="text-[#8B949E] text-sm">Facebook + Instagram Ads</div>
   </div>
 
   <!-- Resumen rápido — 5 números clave -->
   <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-5">
     <div class="card p-4 text-center">
       <div class="font-display text-3xl text-[#22C55E]" id="paid-ventas">—</div>
-      <div class="text-[#6B6B6B] text-xs mt-1">Ventas</div>
+      <div class="text-[#8B949E] text-xs mt-1">Ventas</div>
     </div>
     <div class="card p-4 text-center">
       <div class="font-display text-3xl text-[#22C55E]" id="paid-revenue">—</div>
-      <div class="text-[#6B6B6B] text-xs mt-1">Ingresos</div>
+      <div class="text-[#8B949E] text-xs mt-1">Ingresos</div>
     </div>
     <div class="card p-4 text-center">
-      <div class="font-display text-3xl text-[#F5E500]" id="paid-gasto">—</div>
-      <div class="text-[#6B6B6B] text-xs mt-1">Invertido</div>
+      <div class="font-display text-3xl text-[#CAFF00]" id="paid-gasto">—</div>
+      <div class="text-[#8B949E] text-xs mt-1">Invertido</div>
     </div>
     <div class="card p-4 text-center">
       <div class="font-display text-3xl text-white" id="paid-cpv">—</div>
-      <div class="text-[#6B6B6B] text-xs mt-1">Costo/venta</div>
+      <div class="text-[#8B949E] text-xs mt-1">Costo/venta</div>
     </div>
     <div class="card p-4 text-center">
       <div class="font-display text-3xl text-[#A78BFA]" id="paid-alcance">—</div>
-      <div class="text-[#6B6B6B] text-xs mt-1">Alcanzadas</div>
+      <div class="text-[#8B949E] text-xs mt-1">Alcanzadas</div>
     </div>
   </div>
 
   <!-- Detalle por campaña -->
   <div class="card overflow-hidden mb-4">
-    <div class="px-6 py-4 border-b border-[#2A2A26] flex items-center justify-between">
+    <div class="px-6 py-4 border-b border-[#21262D] flex items-center justify-between">
       <div class="font-semibold text-white">Resultados por campaña</div>
-      <div class="text-[#6B6B6B] text-xs" id="paid-count">—</div>
+      <div class="text-[#8B949E] text-xs" id="paid-count">—</div>
     </div>
-    <div id="paid-campaigns" class="divide-y divide-[#2A2A26]"></div>
+    <div id="paid-campaigns" class="divide-y divide-[#21262D]"></div>
   </div>
 
   <!-- Gráfica de ingresos y ventas por campaña -->
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div class="card p-5">
       <div class="font-semibold text-white mb-1">Ingresos por campaña 💰</div>
-      <div class="text-[#6B6B6B] text-xs mb-4">Cuánto dinero generó cada una</div>
+      <div class="text-[#8B949E] text-xs mb-4">Cuánto dinero generó cada una</div>
       <div style="height:180px;position:relative"><canvas id="chartRevenue"></canvas></div>
     </div>
     <div class="card p-5">
       <div class="font-semibold text-white mb-1">Ventas por campaña 🎯</div>
-      <div class="text-[#6B6B6B] text-xs mb-4">Cuántos clientes cerró cada una</div>
+      <div class="text-[#8B949E] text-xs mb-4">Cuántos clientes cerró cada una</div>
       <div style="height:180px;position:relative"><canvas id="chartVentas"></canvas></div>
     </div>
   </div>
@@ -313,48 +315,48 @@
 
   <div class="flex items-center gap-3 mb-5">
     <div class="section-pill tag-blue">✉️ Email marketing</div>
-    <div class="text-[#6B6B6B] text-sm">Correos a tu lista de contactos</div>
+    <div class="text-[#8B949E] text-sm">Correos a tu lista de contactos</div>
   </div>
 
   <!-- Embudo visual + ingresos -->
   <div class="card p-6 mb-4">
     <div class="font-semibold text-white mb-1">¿Qué pasó con cada correo que enviamos? 📬</div>
-    <div class="text-[#6B6B6B] text-sm mb-8">Así viaja un correo hasta convertirse en ingreso para ti:</div>
+    <div class="text-[#8B949E] text-sm mb-8">Así viaja un correo hasta convertirse en ingreso para ti:</div>
 
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
 
       <div class="text-center">
         <div class="text-4xl mb-2">📨</div>
         <div class="font-display text-3xl text-white" id="email-enviados">—</div>
-        <div class="text-[#A8A8A2] text-xs mt-1 font-semibold">Enviados</div>
-        <div class="text-[#6B6B6B] text-xs">llegaron a su bandeja</div>
+        <div class="text-[#8B949E] text-xs mt-1 font-semibold">Enviados</div>
+        <div class="text-[#8B949E] text-xs">llegaron a su bandeja</div>
       </div>
 
       <div class="text-center">
         <div class="text-4xl mb-2">👀</div>
         <div class="font-display text-3xl text-[#38BDF8]" id="email-abiertos">—</div>
-        <div class="text-[#A8A8A2] text-xs mt-1 font-semibold">Los abrieron</div>
+        <div class="text-[#8B949E] text-xs mt-1 font-semibold">Los abrieron</div>
         <div class="text-[#38BDF8] text-xs font-bold" id="email-tasa-apertura">—%</div>
       </div>
 
       <div class="text-center">
         <div class="text-4xl mb-2">💬</div>
         <div class="font-display text-3xl text-[#A78BFA]" id="email-conversaciones">—</div>
-        <div class="text-[#A8A8A2] text-xs mt-1 font-semibold">Conversaciones</div>
-        <div class="text-[#6B6B6B] text-xs">hicieron clic o respondieron</div>
+        <div class="text-[#8B949E] text-xs mt-1 font-semibold">Conversaciones</div>
+        <div class="text-[#8B949E] text-xs">hicieron clic o respondieron</div>
       </div>
 
       <div class="text-center">
         <div class="text-4xl mb-2">🛍️</div>
         <div class="font-display text-3xl text-[#22C55E]" id="email-ventas">—</div>
-        <div class="text-[#A8A8A2] text-xs mt-1 font-semibold">Ventas</div>
-        <div class="text-[#6B6B6B] text-xs">compraron desde el correo</div>
+        <div class="text-[#8B949E] text-xs mt-1 font-semibold">Ventas</div>
+        <div class="text-[#8B949E] text-xs">compraron desde el correo</div>
       </div>
 
       <div class="text-center">
         <div class="text-4xl mb-2">💵</div>
         <div class="font-display text-3xl text-[#22C55E] shine-text" id="email-revenue">—</div>
-        <div class="text-[#A8A8A2] text-xs mt-1 font-semibold">Ingresos</div>
+        <div class="text-[#8B949E] text-xs mt-1 font-semibold">Ingresos</div>
         <div class="text-[#22C55E] text-xs font-bold">generados por email</div>
       </div>
 
@@ -364,28 +366,28 @@
     <div class="space-y-3">
       <div>
         <div class="flex justify-between text-xs mb-1.5">
-          <span class="text-[#6B6B6B]">📨 Enviados</span>
+          <span class="text-[#8B949E]">📨 Enviados</span>
           <span class="text-white font-semibold">100%</span>
         </div>
-        <div class="progress"><div class="progress-fill bg-[#3E3E3A]" style="width:100%"></div></div>
+        <div class="progress"><div class="progress-fill bg-[#30363D]" style="width:100%"></div></div>
       </div>
       <div>
         <div class="flex justify-between text-xs mb-1.5">
-          <span class="text-[#6B6B6B]">👀 Los abrieron</span>
+          <span class="text-[#8B949E]">👀 Los abrieron</span>
           <span class="text-[#38BDF8] font-semibold" id="email-bar-apertura-label">—</span>
         </div>
         <div class="progress"><div class="progress-fill bg-[#38BDF8]" id="email-bar-apertura" style="width:0%"></div></div>
       </div>
       <div>
         <div class="flex justify-between text-xs mb-1.5">
-          <span class="text-[#6B6B6B]">💬 Iniciaron conversación</span>
+          <span class="text-[#8B949E]">💬 Iniciaron conversación</span>
           <span class="text-[#A78BFA] font-semibold" id="email-bar-conv-label">—</span>
         </div>
         <div class="progress"><div class="progress-fill bg-[#A78BFA]" id="email-bar-conv" style="width:0%"></div></div>
       </div>
       <div>
         <div class="flex justify-between text-xs mb-1.5">
-          <span class="text-[#6B6B6B]">🛍️ Compraron</span>
+          <span class="text-[#8B949E]">🛍️ Compraron</span>
           <span class="text-[#22C55E] font-semibold" id="email-bar-ventas-label">—</span>
         </div>
         <div class="progress"><div class="progress-fill bg-[#22C55E]" id="email-bar-ventas" style="width:0%"></div></div>
@@ -395,23 +397,23 @@
 
   <!-- Tabla de correos -->
   <div class="card overflow-hidden">
-    <div class="px-6 py-4 border-b border-[#2A2A26]">
+    <div class="px-6 py-4 border-b border-[#21262D]">
       <div class="font-semibold text-white">Correos enviados este mes</div>
-      <div class="text-[#6B6B6B] text-xs mt-0.5">Resultados individuales de cada campaña de email</div>
+      <div class="text-[#8B949E] text-xs mt-0.5">Resultados individuales de cada campaña de email</div>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-[#2A2A26]">
-            <th class="text-left text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-6 py-3">Correo</th>
-            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Enviados</th>
-            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Lo abrieron</th>
-            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Conversaciones</th>
-            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Ventas</th>
-            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Ingresos</th>
+          <tr class="border-b border-[#21262D]">
+            <th class="text-left text-[#8B949E] text-xs font-semibold uppercase tracking-wider px-6 py-3">Correo</th>
+            <th class="text-center text-[#8B949E] text-xs font-semibold uppercase tracking-wider px-4 py-3">Enviados</th>
+            <th class="text-center text-[#8B949E] text-xs font-semibold uppercase tracking-wider px-4 py-3">Lo abrieron</th>
+            <th class="text-center text-[#8B949E] text-xs font-semibold uppercase tracking-wider px-4 py-3">Conversaciones</th>
+            <th class="text-center text-[#8B949E] text-xs font-semibold uppercase tracking-wider px-4 py-3">Ventas</th>
+            <th class="text-center text-[#8B949E] text-xs font-semibold uppercase tracking-wider px-4 py-3">Ingresos</th>
           </tr>
         </thead>
-        <tbody id="email-tabla" class="divide-y divide-[#1F1F1D]"></tbody>
+        <tbody id="email-tabla" class="divide-y divide-[#161B22]"></tbody>
       </table>
     </div>
   </div>
@@ -426,22 +428,22 @@
 
   <div class="flex items-center gap-3 mb-5">
     <div class="section-pill tag-purple">✨ Contenido orgánico</div>
-    <div class="text-[#6B6B6B] text-sm">Instagram + Facebook sin inversión adicional</div>
+    <div class="text-[#8B949E] text-sm">Instagram + Facebook sin inversión adicional</div>
   </div>
 
   <!-- Programado vs Publicado -->
   <div class="card p-6 mb-4">
     <div class="font-semibold text-white mb-1">¿Qué tan consistentes fuimos? 📅</div>
-    <div class="text-[#6B6B6B] text-sm mb-6">La consistencia construye marcas. Así lo hicimos este mes:</div>
+    <div class="text-[#8B949E] text-sm mb-6">La consistencia construye marcas. Así lo hicimos este mes:</div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
       <div>
         <div class="flex items-end gap-6 mb-4">
           <div class="text-center">
-            <div class="font-display text-6xl text-[#3E3E3A]" id="org-programado">—</div>
-            <div class="text-[#6B6B6B] text-sm mt-1">Programadas</div>
+            <div class="font-display text-6xl text-[#30363D]" id="org-programado">—</div>
+            <div class="text-[#8B949E] text-sm mt-1">Programadas</div>
           </div>
-          <div class="text-[#6B6B6B] text-3xl mb-4">→</div>
+          <div class="text-[#8B949E] text-3xl mb-4">→</div>
           <div class="text-center">
             <div class="font-display text-6xl text-[#22C55E]" id="org-publicado">—</div>
             <div class="text-[#22C55E] text-sm mt-1 font-bold">Publicadas ✅</div>
@@ -451,7 +453,7 @@
           <div class="progress-fill bg-[#22C55E]" id="org-cumplimiento-bar" style="width:0%"></div>
         </div>
         <div class="flex justify-between text-xs mt-2">
-          <span class="text-[#6B6B6B]">Cumplimiento del plan</span>
+          <span class="text-[#8B949E]">Cumplimiento del plan</span>
           <span class="text-[#22C55E] font-bold" id="org-cumplimiento-pct">—%</span>
         </div>
       </div>
@@ -464,56 +466,56 @@
     <div class="card p-5 text-center">
       <div class="text-3xl mb-2">👁️</div>
       <div class="font-display text-3xl text-[#A78BFA]" id="org-alcance">—</div>
-      <div class="text-[#A8A8A2] text-sm mt-1">Personas alcanzadas</div>
-      <div class="text-[#6B6B6B] text-xs mt-1">sin invertir un peso</div>
+      <div class="text-[#8B949E] text-sm mt-1">Personas alcanzadas</div>
+      <div class="text-[#8B949E] text-xs mt-1">sin invertir un peso</div>
     </div>
     <div class="card p-5 text-center">
       <div class="text-3xl mb-2">❤️</div>
       <div class="font-display text-3xl text-white" id="org-likes">—</div>
-      <div class="text-[#A8A8A2] text-sm mt-1">Me gustas</div>
+      <div class="text-[#8B949E] text-sm mt-1">Me gustas</div>
       <div class="tag-green text-xs px-2.5 py-1 rounded-full font-semibold inline-block mt-2">+45% ↑</div>
     </div>
     <div class="card p-5 text-center">
       <div class="text-3xl mb-2">💬</div>
       <div class="font-display text-3xl text-white" id="org-comentarios">—</div>
-      <div class="text-[#A8A8A2] text-sm mt-1">Comentarios</div>
-      <div class="text-[#6B6B6B] text-xs mt-1">tu comunidad habla</div>
+      <div class="text-[#8B949E] text-sm mt-1">Comentarios</div>
+      <div class="text-[#8B949E] text-xs mt-1">tu comunidad habla</div>
     </div>
     <div class="card p-5 text-center">
       <div class="text-3xl mb-2">🔖</div>
       <div class="font-display text-3xl text-white" id="org-guardados">—</div>
-      <div class="text-[#A8A8A2] text-sm mt-1">Guardados</div>
-      <div class="text-[#6B6B6B] text-xs mt-1">contenido valioso</div>
+      <div class="text-[#8B949E] text-sm mt-1">Guardados</div>
+      <div class="text-[#8B949E] text-xs mt-1">contenido valioso</div>
     </div>
   </div>
 
   <!-- Gráfica alcance orgánico -->
   <div class="card p-5 mb-4">
     <div class="font-semibold text-white mb-1">Personas que vieron tu contenido cada día 📈</div>
-    <div class="text-[#6B6B6B] text-xs mb-4">Alcance orgánico sin inversión — tu audiencia crece</div>
+    <div class="text-[#8B949E] text-xs mb-4">Alcance orgánico sin inversión — tu audiencia crece</div>
     <div style="height:160px;position:relative"><canvas id="chartOrgAlcance"></canvas></div>
   </div>
 
   <!-- Tabla de publicaciones -->
   <div class="card overflow-hidden">
-    <div class="px-6 py-4 border-b border-[#2A2A26]">
+    <div class="px-6 py-4 border-b border-[#21262D]">
       <div class="font-semibold text-white">Publicaciones del mes</div>
-      <div class="text-[#6B6B6B] text-xs mt-0.5">Resultados de cada post publicado</div>
+      <div class="text-[#8B949E] text-xs mt-0.5">Resultados de cada post publicado</div>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-[#2A2A26]">
-            <th class="text-left text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-6 py-3">Publicación</th>
-            <th class="text-left text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Tipo</th>
-            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Alcance</th>
-            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">❤️</th>
-            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">💬</th>
-            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">🔖</th>
-            <th class="text-center text-[#6B6B6B] text-xs font-semibold uppercase tracking-wider px-4 py-3">Interacción</th>
+          <tr class="border-b border-[#21262D]">
+            <th class="text-left text-[#8B949E] text-xs font-semibold uppercase tracking-wider px-6 py-3">Publicación</th>
+            <th class="text-left text-[#8B949E] text-xs font-semibold uppercase tracking-wider px-4 py-3">Tipo</th>
+            <th class="text-center text-[#8B949E] text-xs font-semibold uppercase tracking-wider px-4 py-3">Alcance</th>
+            <th class="text-center text-[#8B949E] text-xs font-semibold uppercase tracking-wider px-4 py-3">❤️</th>
+            <th class="text-center text-[#8B949E] text-xs font-semibold uppercase tracking-wider px-4 py-3">💬</th>
+            <th class="text-center text-[#8B949E] text-xs font-semibold uppercase tracking-wider px-4 py-3">🔖</th>
+            <th class="text-center text-[#8B949E] text-xs font-semibold uppercase tracking-wider px-4 py-3">Interacción</th>
           </tr>
         </thead>
-        <tbody id="org-tabla" class="divide-y divide-[#1F1F1D]"></tbody>
+        <tbody id="org-tabla" class="divide-y divide-[#161B22]"></tbody>
       </table>
     </div>
   </div>
@@ -528,32 +530,32 @@
   <div class="card-revenue p-6 text-center glow-green">
     <div class="text-5xl mb-3">🚀</div>
     <div class="font-display text-3xl text-[#22C55E] tracking-wider mb-2">¡TU MARCA ESTÁ CRECIENDO!</div>
-    <div class="text-[#A8A8A2] text-sm max-w-lg mx-auto">
+    <div class="text-[#8B949E] text-sm max-w-lg mx-auto">
       Cada publicación, cada correo y cada campaña suma. Los resultados de este mes son la base para un próximo mes aún mejor.
     </div>
     <div class="flex items-center justify-center gap-6 mt-5 flex-wrap">
       <div class="text-center">
         <div class="font-display text-2xl text-[#22C55E]" id="cierre-ventas">—</div>
-        <div class="text-[#6B6B6B] text-xs">ventas cerradas</div>
+        <div class="text-[#8B949E] text-xs">ventas cerradas</div>
       </div>
-      <div class="text-[#3E3E3A] text-2xl">·</div>
+      <div class="text-[#30363D] text-2xl">·</div>
       <div class="text-center">
         <div class="font-display text-2xl text-[#22C55E]" id="cierre-revenue">—</div>
-        <div class="text-[#6B6B6B] text-xs">en ingresos</div>
+        <div class="text-[#8B949E] text-xs">en ingresos</div>
       </div>
-      <div class="text-[#3E3E3A] text-2xl">·</div>
+      <div class="text-[#30363D] text-2xl">·</div>
       <div class="text-center">
         <div class="font-display text-2xl text-[#A78BFA]" id="cierre-alcance">—</div>
-        <div class="text-[#6B6B6B] text-xs">personas alcanzadas</div>
+        <div class="text-[#8B949E] text-xs">personas alcanzadas</div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- Footer -->
-<footer class="border-t border-[#2A2A26] pt-6 pb-10 text-center">
-  <div class="text-[#6B6B6B] text-xs">Actualizado automáticamente · <span class="text-[#F5E500]" id="footer-time">—</span></div>
-  <div class="text-[#3E3E3A] text-xs mt-1">Dashboard by PLAYBOOKS · playbooks-mx.pages.dev</div>
+<footer class="border-t border-[#21262D] pt-6 pb-10 text-center">
+  <div class="text-[#8B949E] text-xs">Actualizado automáticamente · <span class="text-[#CAFF00]" id="footer-time">—</span></div>
+  <div class="text-[#30363D] text-xs mt-1">PLAY<span class="text-[#CAFF00]">BOOKS</span> · playbooks-mx.pages.dev</div>
 </footer>
 
 </div><!-- /max-w -->
@@ -595,7 +597,7 @@ const PERIODS = {
       programado:24, publicado:22, alcance:89420, likes:5029, comentarios:335, guardados:1284,
       tipos:[
         { tipo:"Reels",cantidad:8,color:"#A78BFA" },{ tipo:"Carruseles",cantidad:7,color:"#38BDF8" },
-        { tipo:"Imágenes",cantidad:5,color:"#F5E500" },{ tipo:"Historias",cantidad:2,color:"#FB923C" },
+        { tipo:"Imágenes",cantidad:5,color:"#CAFF00" },{ tipo:"Historias",cantidad:2,color:"#FB923C" },
       ],
       orgDays:[2800,3100,2600,2400,3200,4100,3800,2900,2700,3100,3600,3300,2800,2900,3400,4200,3900,3100,2900,3400,4000,4600,4400,3800,3600,3400,4100,4700,5200,4800],
       posts:[
@@ -638,7 +640,7 @@ const PERIODS = {
       programado:22, publicado:20, alcance:74800, likes:4120, comentarios:274, guardados:1048,
       tipos:[
         { tipo:"Reels",cantidad:7,color:"#A78BFA" },{ tipo:"Carruseles",cantidad:6,color:"#38BDF8" },
-        { tipo:"Imágenes",cantidad:5,color:"#F5E500" },{ tipo:"Historias",cantidad:2,color:"#FB923C" },
+        { tipo:"Imágenes",cantidad:5,color:"#CAFF00" },{ tipo:"Historias",cantidad:2,color:"#FB923C" },
       ],
       orgDays:[2200,2400,2100,2000,2600,3400,3100,2400,2200,2600,2900,2700,2200,2400,2800,3500,3200,2600,2400,2800,3300,3800,3600,3100,2900,2800,3400,3900,4200,3800],
       posts:[
@@ -680,7 +682,7 @@ const PERIODS = {
       programado:20, publicado:18, alcance:62100, likes:3348, comentarios:221, guardados:842,
       tipos:[
         { tipo:"Reels",cantidad:6,color:"#A78BFA" },{ tipo:"Carruseles",cantidad:5,color:"#38BDF8" },
-        { tipo:"Imágenes",cantidad:5,color:"#F5E500" },{ tipo:"Historias",cantidad:2,color:"#FB923C" },
+        { tipo:"Imágenes",cantidad:5,color:"#CAFF00" },{ tipo:"Historias",cantidad:2,color:"#FB923C" },
       ],
       orgDays:[1800,2000,1700,1600,2100,2800,2600,1900,1800,2100,2400,2200,1800,1900,2300,2800,2600,2100,1900,2300,2700,3100,2900,2600,2400,2200,2700,3100,3400,3100],
       posts:[
@@ -723,7 +725,7 @@ PERIODS['esta-semana'] = {
     programado:6, publicado:6, alcance:18400, likes:982, comentarios:64, guardados:248,
     tipos:[
       { tipo:"Reels",cantidad:2,color:"#A78BFA" },{ tipo:"Carruseles",cantidad:2,color:"#38BDF8" },
-      { tipo:"Imágenes",cantidad:1,color:"#F5E500" },{ tipo:"Historias",cantidad:1,color:"#FB923C" },
+      { tipo:"Imágenes",cantidad:1,color:"#CAFF00" },{ tipo:"Historias",cantidad:1,color:"#FB923C" },
     ],
     orgDays:[3400,4100,3800,2900,2700,3100,3600],
     posts:[
@@ -762,7 +764,7 @@ PERIODS['semana-pasada'] = {
     programado:6, publicado:5, alcance:16200, likes:862, comentarios:54, guardados:214,
     tipos:[
       { tipo:"Reels",cantidad:2,color:"#A78BFA" },{ tipo:"Carruseles",cantidad:1,color:"#38BDF8" },
-      { tipo:"Imágenes",cantidad:1,color:"#F5E500" },{ tipo:"Historias",cantidad:1,color:"#FB923C" },
+      { tipo:"Imágenes",cantidad:1,color:"#CAFF00" },{ tipo:"Historias",cantidad:1,color:"#FB923C" },
     ],
     orgDays:[3100,3800,3400,2600,2400,2800,3300],
     posts:[
@@ -801,7 +803,7 @@ PERIODS['ultimos-3-meses'] = {
     programado:66, publicado:60, alcance:226340, likes:12497, comentarios:830, guardados:3174,
     tipos:[
       { tipo:"Reels",cantidad:21,color:"#A78BFA" },{ tipo:"Carruseles",cantidad:18,color:"#38BDF8" },
-      { tipo:"Imágenes",cantidad:15,color:"#F5E500" },{ tipo:"Historias",cantidad:6,color:"#FB923C" },
+      { tipo:"Imágenes",cantidad:15,color:"#CAFF00" },{ tipo:"Historias",cantidad:6,color:"#FB923C" },
     ],
     orgDays:[2200,2400,2100,2000,2600,3400,3100,2400,2200,2600,2900,2700,2800,3100,3400,4200,3900,3100,2900,3400,4000,4600,4400,3800,3600,3400,4100,4700,5200,4800],
     posts:[
@@ -925,7 +927,7 @@ function renderPaid() {
       <div class="flex flex-col sm:flex-row sm:items-center gap-3">
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
-            <span class="w-2 h-2 rounded-full flex-shrink-0 ${isAct?'bg-[#22C55E] pulse-dot':'bg-[#6B6B6B]'}"></span>
+            <span class="w-2 h-2 rounded-full flex-shrink-0 ${isAct?'bg-[#22C55E] pulse-dot':'bg-[#8B949E]'}"></span>
             <span class="text-white font-medium">${c.nombre}</span>
             ${isTop ? '<span class="best-badge">🏆 Top campaña</span>' : ''}
             ${!isAct ? '<span class="tag-red text-[10px] px-2 py-0.5 rounded-full">Pausada</span>' : ''}
@@ -934,23 +936,23 @@ function renderPaid() {
         <div class="grid grid-cols-5 gap-4 flex-shrink-0 text-center">
           <div>
             <div class="font-display text-xl text-[#22C55E]">${jitter(c.ventas,.03)}</div>
-            <div class="text-[#6B6B6B] text-[10px]">Ventas</div>
+            <div class="text-[#8B949E] text-[10px]">Ventas</div>
           </div>
           <div>
             <div class="font-display text-xl text-[#22C55E]">${peso(jitter(c.revenue,.01))}</div>
-            <div class="text-[#6B6B6B] text-[10px]">Ingresos</div>
+            <div class="text-[#8B949E] text-[10px]">Ingresos</div>
           </div>
           <div>
-            <div class="font-display text-xl text-[#F5E500]">${peso(c.gasto)}</div>
-            <div class="text-[#6B6B6B] text-[10px]">Invertido</div>
+            <div class="font-display text-xl text-[#CAFF00]">${peso(c.gasto)}</div>
+            <div class="text-[#8B949E] text-[10px]">Invertido</div>
           </div>
           <div>
             <div class="font-display text-xl text-white">${c.ventas>0?peso(cpv):'—'}</div>
-            <div class="text-[#6B6B6B] text-[10px]">Costo/venta</div>
+            <div class="text-[#8B949E] text-[10px]">Costo/venta</div>
           </div>
           <div>
             <div class="font-display text-xl text-[#A78BFA]">${fmt(jitter(c.alcance,.01))}</div>
-            <div class="text-[#6B6B6B] text-[10px]">Alcanzadas</div>
+            <div class="text-[#8B949E] text-[10px]">Alcanzadas</div>
           </div>
         </div>
       </div>
@@ -980,23 +982,23 @@ function renderEmail() {
 
   document.getElementById('email-tabla').innerHTML = e.correos.map(c => {
     const ap = pct(c.abiertos,c.enviados);
-    const apCls = ap>35?'text-[#22C55E]':ap>20?'text-[#F5E500]':'text-[#FF6B6B]';
+    const apCls = ap>35?'text-[#22C55E]':ap>20?'text-[#CAFF00]':'text-[#FF6B6B]';
     return `<tr class="hover:bg-[rgba(255,255,255,.02)] transition-colors">
       <td class="px-6 py-4">
         <div class="text-white font-medium">${c.nombre}</div>
-        <div class="text-[#6B6B6B] text-xs mt-0.5">${c.fecha}</div>
+        <div class="text-[#8B949E] text-xs mt-0.5">${c.fecha}</div>
       </td>
-      <td class="px-4 py-4 text-center text-[#A8A8A2] font-semibold">${fmt(c.enviados)}</td>
+      <td class="px-4 py-4 text-center text-[#8B949E] font-semibold">${fmt(c.enviados)}</td>
       <td class="px-4 py-4 text-center">
         <span class="font-semibold ${apCls}">${fmt(c.abiertos)}</span>
-        <span class="text-[#6B6B6B] text-xs ml-1">(${ap}%)</span>
+        <span class="text-[#8B949E] text-xs ml-1">(${ap}%)</span>
       </td>
       <td class="px-4 py-4 text-center text-[#A78BFA] font-semibold">${fmt(c.conversaciones)}</td>
       <td class="px-4 py-4 text-center">
-        ${c.ventas>0?`<span class="tag-green text-xs px-2.5 py-1 rounded-full font-bold">${c.ventas} ventas</span>`:`<span class="text-[#3E3E3A]">—</span>`}
+        ${c.ventas>0?`<span class="tag-green text-xs px-2.5 py-1 rounded-full font-bold">${c.ventas} ventas</span>`:`<span class="text-[#30363D]">—</span>`}
       </td>
       <td class="px-4 py-4 text-center">
-        ${c.revenue>0?`<span class="text-[#22C55E] font-bold">${peso(c.revenue)}</span>`:`<span class="text-[#3E3E3A]">—</span>`}
+        ${c.revenue>0?`<span class="text-[#22C55E] font-bold">${peso(c.revenue)}</span>`:`<span class="text-[#30363D]">—</span>`}
       </td>
     </tr>`;
   }).join('');
@@ -1019,22 +1021,22 @@ function renderOrganico() {
   document.getElementById('org-tipos').innerHTML = o.tipos.map(t=>`
     <div>
       <div class="flex justify-between text-sm mb-1">
-        <span class="text-[#A8A8A2]">${t.tipo}</span>
+        <span class="text-[#8B949E]">${t.tipo}</span>
         <span class="text-white font-semibold">${t.cantidad}</span>
       </div>
       <div class="progress" style="height:6px"><div class="progress-fill" style="background:${t.color};width:${Math.round(t.cantidad/maxTipo*100)}%"></div></div>
     </div>`).join('');
 
   document.getElementById('org-tabla').innerHTML = o.posts.map(p=>{
-    const tc = {Reel:'text-[#A78BFA]',Carrusel:'text-[#38BDF8]',Imagen:'text-[#F5E500]',Historia:'text-[#FB923C]'}[p.tipo]||'text-white';
-    const ec = p.eng>8?'text-[#22C55E] font-bold':p.eng>5?'text-[#F5E500]':'text-[#A8A8A2]';
+    const tc = {Reel:'text-[#A78BFA]',Carrusel:'text-[#38BDF8]',Imagen:'text-[#CAFF00]',Historia:'text-[#FB923C]'}[p.tipo]||'text-white';
+    const ec = p.eng>8?'text-[#22C55E] font-bold':p.eng>5?'text-[#CAFF00]':'text-[#8B949E]';
     return `<tr class="hover:bg-[rgba(255,255,255,.02)] transition-colors">
       <td class="px-6 py-3.5 text-white font-medium">${p.nombre}</td>
       <td class="px-4 py-3.5"><span class="${tc} text-xs font-semibold">${p.tipo}</span></td>
       <td class="px-4 py-3.5 text-center text-[#A78BFA] font-semibold">${fmt(jitter(p.alcance,.01))}</td>
-      <td class="px-4 py-3.5 text-center text-[#A8A8A2]">${p.likes>0?p.likes.toLocaleString():'—'}</td>
-      <td class="px-4 py-3.5 text-center text-[#A8A8A2]">${p.comentarios>0?p.comentarios:'—'}</td>
-      <td class="px-4 py-3.5 text-center text-[#A8A8A2]">${p.guardados>0?p.guardados:'—'}</td>
+      <td class="px-4 py-3.5 text-center text-[#8B949E]">${p.likes>0?p.likes.toLocaleString():'—'}</td>
+      <td class="px-4 py-3.5 text-center text-[#8B949E]">${p.comentarios>0?p.comentarios:'—'}</td>
+      <td class="px-4 py-3.5 text-center text-[#8B949E]">${p.guardados>0?p.guardados:'—'}</td>
       <td class="px-4 py-3.5 text-center"><span class="${ec}">${p.eng}%</span></td>
     </tr>`;
   }).join('');
@@ -1056,14 +1058,14 @@ function updateTime() {
 //  GRÁFICAS
 // ─────────────────────────────────────────
 const TT = {
-  backgroundColor:'#1A1A18', borderColor:'#3E3E3A', borderWidth:1,
-  titleColor:'#F5F5F0', bodyColor:'#A8A8A2', padding:12,
-  titleFont:{family:"'Space Grotesk',sans-serif",size:12,weight:'600'},
-  bodyFont:{family:"'Space Grotesk',sans-serif",size:12},
+  backgroundColor:'#161B22', borderColor:'#30363D', borderWidth:1,
+  titleColor:'#F0EDE4', bodyColor:'#8B949E', padding:12,
+  titleFont:{family:"'Plus Jakarta Sans',sans-serif",size:12,weight:'600'},
+  bodyFont:{family:"'Plus Jakarta Sans',sans-serif",size:12},
 };
 const SC = {
-  x:{grid:{color:'#1F1F1D'},ticks:{color:'#6B6B6B',font:{family:"'Space Grotesk'",size:10}}},
-  y:{grid:{color:'#1F1F1D'},ticks:{color:'#6B6B6B',font:{family:"'Space Grotesk'",size:10}}},
+  x:{grid:{color:'#161B22'},ticks:{color:'#8B949E',font:{family:"'Plus Jakarta Sans'",size:10}}},
+  y:{grid:{color:'#161B22'},ticks:{color:'#8B949E',font:{family:"'Plus Jakarta Sans'",size:10}}},
 };
 
 // ─────────────────────────────────────────
